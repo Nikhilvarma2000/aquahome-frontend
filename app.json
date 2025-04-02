@@ -4,9 +4,9 @@
     "slug": "aquahome",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon/aqua_home.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icon/aqua_home.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
