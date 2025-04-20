@@ -79,7 +79,7 @@ const CustomerDashboard = () => {
           </Text>
           <Button
             title="View All"
-            onPress={() => navigation.navigate('Subscriptions' as never)}
+            onPress={() => navigation.navigate('SubscriptionManagement' as never)}
             variant="outline"
             size="small"
           />
@@ -110,7 +110,7 @@ const CustomerDashboard = () => {
             </Text>
             <Button
               title="Explore Products"
-              onPress={() => navigation.navigate('Products' as never)}
+              onPress={() => navigation.navigate('ProductListing' as never)}
               size="small"
               style={styles.exploreButton}
             />
@@ -157,7 +157,7 @@ const CustomerDashboard = () => {
             </Text>
             <Button
               title="Place New Order"
-              onPress={() => navigation.navigate('Products' as never)}
+              onPress={() => navigation.navigate('ProductListing' as never)}
               size="small"
               style={styles.exploreButton}
             />
@@ -204,7 +204,7 @@ const CustomerDashboard = () => {
             </Text>
             <Button
               title="Request Service"
-              onPress={() => navigation.navigate('CreateServiceRequest' as never)}
+              onPress={() => navigation.navigate('ServiceRequest' as never)}
               size="small"
               style={styles.exploreButton}
             />
@@ -252,7 +252,7 @@ const CustomerDashboard = () => {
         </View>
       )}
       
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <Text style={[styles.footerText, { color: colors.textSecondary }]}>
           Need help? Contact our support team
         </Text>
@@ -263,7 +263,7 @@ const CustomerDashboard = () => {
           size="small"
           style={styles.supportButton}
         />
-      </View>
+      </View> */}
     </ScrollView>
   );
 };

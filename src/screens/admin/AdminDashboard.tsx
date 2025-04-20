@@ -19,26 +19,8 @@ import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import OrderItem from '../../components/OrderItem';
 import ServiceRequestCard from '../../components/ServiceRequestCard';
+import { adminService } from '@/services/adminService';
 
-// This would be replaced with a real service in production
-const adminService = {
-  async getDashboardData(): Promise<AdminDashboardData> {
-    // Simulated API call
-    return {
-      stats: {
-        totalCustomers: 256,
-        totalOrders: 567,
-        totalRevenue: 1854250,
-        activeSubscriptions: 189,
-        pendingServiceRequests: 27,
-        franchiseApplications: 5
-      },
-      recentOrders: [],
-      recentCustomers: [],
-      recentServiceRequests: []
-    };
-  }
-};
 
 const AdminDashboard = () => {
   const { colors } = useTheme();
@@ -200,7 +182,7 @@ const AdminDashboard = () => {
         </TouchableOpacity>
       </View>
       
-      {/* Recent Orders Section */}
+      {/* Recent Orders Section
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -212,7 +194,7 @@ const AdminDashboard = () => {
             variant="outline"
             size="small"
           />
-        </View>
+        </View> 
         
         {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
           <FlatList
@@ -241,7 +223,7 @@ const AdminDashboard = () => {
         )}
       </View>
       
-      {/* Recent Customers Section */}
+      // Recent Customers Section
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -283,7 +265,7 @@ const AdminDashboard = () => {
         )}
       </View>
       
-      {/* Service Requests Section */}
+      // Service Requests Section
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -322,13 +304,16 @@ const AdminDashboard = () => {
             </Text>
           </Card>
         )}
-      </View>
+      </View> */}
       
       {/* Footer Action Buttons */}
       <View style={styles.footerActions}>
         <Button
           title="Generate Reports"
-          onPress={() => navigation.navigate('ReportGeneration' as never)}
+          onPress={() => {
+            // navigation.navigate('ReportGeneration' as never)
+            Alert.alert('Report', 'Report functionality to be implemented')
+          }}
           variant="primary"
           style={styles.footerButton}
           icon={<Feather name="bar-chart-2" size={16} color="#fff" />}
@@ -347,37 +332,37 @@ const AdminDashboard = () => {
 };
 
 // Customer list item component
-interface CustomerListItemProps {
-  customer: User;
-  onPress: () => void;
-  colors: any;
-}
+// interface CustomerListItemProps {
+//   customer: User;
+//   onPress: () => void;
+//   colors: any;
+// }
 
-const CustomerListItem: React.FC<CustomerListItemProps> = ({ customer, onPress, colors }) => {
-  return (
-    <TouchableOpacity 
-      onPress={onPress}
-      style={[styles.customerItem, { backgroundColor: colors.card }]}
-    >
-      <View style={[styles.customerAvatar, { backgroundColor: colors.primary + '20' }]}>
-        <Text style={[styles.avatarText, { color: colors.primary }]}>
-          {customer.name.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+// const CustomerListItem: React.FC<CustomerListItemProps> = ({ customer, onPress, colors }) => {
+//   return (
+//     <TouchableOpacity 
+//       onPress={onPress}
+//       style={[styles.customerItem, { backgroundColor: colors.card }]}
+//     >
+//       <View style={[styles.customerAvatar, { backgroundColor: colors.primary + '20' }]}>
+//         <Text style={[styles.avatarText, { color: colors.primary }]}>
+//           {customer.name.charAt(0).toUpperCase()}
+//         </Text>
+//       </View>
       
-      <View style={styles.customerInfo}>
-        <Text style={[styles.customerName, { color: colors.text }]}>
-          {customer.name}
-        </Text>
-        <Text style={[styles.customerEmail, { color: colors.textSecondary }]}>
-          {customer.email}
-        </Text>
-      </View>
+//       <View style={styles.customerInfo}>
+//         <Text style={[styles.customerName, { color: colors.text }]}>
+//           {customer.name}
+//         </Text>
+//         <Text style={[styles.customerEmail, { color: colors.textSecondary }]}>
+//           {customer.email}
+//         </Text>
+//       </View>
       
-      <Feather name="chevron-right" size={20} color={colors.textSecondary} />
-    </TouchableOpacity>
-  );
-};
+//       <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+//     </TouchableOpacity>
+//   );
+// };
 
 const styles = StyleSheet.create({
   container: {

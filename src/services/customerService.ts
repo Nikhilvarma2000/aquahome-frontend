@@ -1,14 +1,41 @@
-import api from './api';
-import { CustomerDashboardData, Order, Subscription, ServiceRequest, WaterQualityData } from '../types';
+import api from "./api";
+import {
+  CustomerDashboardData,
+  Order,
+  Subscription,
+  ServiceRequest,
+  WaterQualityData,
+  User,
+} from "../types";
 
 export const customerService = {
   // Get customer dashboard data
   async getDashboardData(): Promise<CustomerDashboardData> {
+    return {
+      user: undefined,
+      activeSubscriptions: (await this.getSubscriptions()).filter(
+        (subscription) => subscription.status === "active"
+      ),
+      activeServiceRequests: (await this.getServiceRequests()).filter(
+        (serviceRequest) => {
+          return (
+            serviceRequest.status !== "completed" &&
+            serviceRequest.status !== "cancelled"
+          );
+        }
+      ),
+      pendingOrders: (await this.getOrders()).filter(
+        (order) => order.status === "pending"
+      ),
+    };
+  },
+
+  async getUser(): Promise<User> {
     try {
-      const response = await api.get('/customer/dashboard');
+      const response = await api.get("/profile");
       return response.data;
     } catch (error) {
-      console.error('Get dashboard data error:', error);
+      console.error("Get User error:", error);
       throw error;
     }
   },
@@ -16,10 +43,10 @@ export const customerService = {
   // Get all orders for the customer
   async getOrders(): Promise<Order[]> {
     try {
-      const response = await api.get('/customer/orders');
+      const response = await api.get("/orders/customer");
       return response.data;
     } catch (error) {
-      console.error('Get orders error:', error);
+      console.error("Get orders error:", error);
       throw error;
     }
   },
@@ -30,7 +57,7 @@ export const customerService = {
       const response = await api.get(`/customer/orders/${orderId}`);
       return response.data;
     } catch (error) {
-      console.error('Get order by id error:', error);
+      console.error("Get order by id error:", error);
       throw error;
     }
   },
@@ -38,10 +65,10 @@ export const customerService = {
   // Place a new order
   async placeOrder(orderData: Partial<Order>): Promise<Order> {
     try {
-      const response = await api.post('/customer/orders', orderData);
+      const response = await api.post("/customer/orders", orderData);
       return response.data;
     } catch (error) {
-      console.error('Place order error:', error);
+      console.error("Place order error:", error);
       throw error;
     }
   },
@@ -52,7 +79,7 @@ export const customerService = {
       const response = await api.post(`/customer/orders/${orderId}/cancel`);
       return response.data;
     } catch (error) {
-      console.error('Cancel order error:', error);
+      console.error("Cancel order error:", error);
       throw error;
     }
   },
@@ -60,10 +87,10 @@ export const customerService = {
   // Get all subscriptions for the customer
   async getSubscriptions(): Promise<Subscription[]> {
     try {
-      const response = await api.get('/customer/subscriptions');
+      const response = await api.get("/subscriptions/customer");
       return response.data;
     } catch (error) {
-      console.error('Get subscriptions error:', error);
+      console.error("Get subscriptions error:", error);
       throw error;
     }
   },
@@ -71,32 +98,44 @@ export const customerService = {
   // Get a specific subscription
   async getSubscriptionById(subscriptionId: string): Promise<Subscription> {
     try {
-      const response = await api.get(`/customer/subscriptions/${subscriptionId}`);
+      const response = await api.get(
+        `/customer/subscriptions/${subscriptionId}`
+      );
       return response.data;
     } catch (error) {
-      console.error('Get subscription by id error:', error);
+      console.error("Get subscription by id error:", error);
       throw error;
     }
   },
 
   // Cancel a subscription
-  async cancelSubscription(subscriptionId: string): Promise<{ message: string }> {
+  async cancelSubscription(
+    subscriptionId: string
+  ): Promise<{ message: string }> {
     try {
-      const response = await api.post(`/customer/subscriptions/${subscriptionId}/cancel`);
+      const response = await api.post(
+        `/customer/subscriptions/${subscriptionId}/cancel`
+      );
       return response.data;
     } catch (error) {
-      console.error('Cancel subscription error:', error);
+      console.error("Cancel subscription error:", error);
       throw error;
     }
   },
 
   // Pause a subscription
-  async pauseSubscription(subscriptionId: string, resumeDate?: string): Promise<Subscription> {
+  async pauseSubscription(
+    subscriptionId: string,
+    resumeDate?: string
+  ): Promise<Subscription> {
     try {
-      const response = await api.post(`/customer/subscriptions/${subscriptionId}/pause`, { resumeDate });
+      const response = await api.post(
+        `/customer/subscriptions/${subscriptionId}/pause`,
+        { resumeDate }
+      );
       return response.data;
     } catch (error) {
-      console.error('Pause subscription error:', error);
+      console.error("Pause subscription error:", error);
       throw error;
     }
   },
@@ -104,10 +143,12 @@ export const customerService = {
   // Resume a subscription
   async resumeSubscription(subscriptionId: string): Promise<Subscription> {
     try {
-      const response = await api.post(`/customer/subscriptions/${subscriptionId}/resume`);
+      const response = await api.post(
+        `/customer/subscriptions/${subscriptionId}/resume`
+      );
       return response.data;
     } catch (error) {
-      console.error('Resume subscription error:', error);
+      console.error("Resume subscription error:", error);
       throw error;
     }
   },
@@ -115,54 +156,74 @@ export const customerService = {
   // Get all service requests for the customer
   async getServiceRequests(): Promise<ServiceRequest[]> {
     try {
-      const response = await api.get('/customer/service-requests');
+      const response = await api.get("/services");
       return response.data;
     } catch (error) {
-      console.error('Get service requests error:', error);
+      console.error("Get service requests error:", error);
       throw error;
     }
   },
 
   // Get a specific service request
-  async getServiceRequestById(serviceRequestId: string): Promise<ServiceRequest> {
+  async getServiceRequestById(
+    serviceRequestId: string
+  ): Promise<ServiceRequest> {
     try {
-      const response = await api.get(`/customer/service-requests/${serviceRequestId}`);
+      const response = await api.get(
+        `/customer/service-requests/${serviceRequestId}`
+      );
       return response.data;
     } catch (error) {
-      console.error('Get service request by id error:', error);
+      console.error("Get service request by id error:", error);
       throw error;
     }
   },
 
   // Create a new service request
-  async createServiceRequest(serviceData: Partial<ServiceRequest>): Promise<ServiceRequest> {
+  async createServiceRequest(
+    serviceData: Partial<ServiceRequest>
+  ): Promise<ServiceRequest> {
     try {
-      const response = await api.post('/customer/service-requests', serviceData);
+      const response = await api.post(
+        "/customer/service-requests",
+        serviceData
+      );
       return response.data;
     } catch (error) {
-      console.error('Create service request error:', error);
+      console.error("Create service request error:", error);
       throw error;
     }
   },
 
   // Cancel a service request
-  async cancelServiceRequest(serviceRequestId: string): Promise<{ message: string }> {
+  async cancelServiceRequest(
+    serviceRequestId: string
+  ): Promise<{ message: string }> {
     try {
-      const response = await api.post(`/customer/service-requests/${serviceRequestId}/cancel`);
+      const response = await api.post(
+        `/customer/service-requests/${serviceRequestId}/cancel`
+      );
       return response.data;
     } catch (error) {
-      console.error('Cancel service request error:', error);
+      console.error("Cancel service request error:", error);
       throw error;
     }
   },
 
   // Submit feedback for a completed service request
-  async submitServiceFeedback(serviceRequestId: string, feedback: string, rating: number): Promise<ServiceRequest> {
+  async submitServiceFeedback(
+    serviceRequestId: string,
+    feedback: string,
+    rating: number
+  ): Promise<ServiceRequest> {
     try {
-      const response = await api.post(`/customer/service-requests/${serviceRequestId}/feedback`, { feedback, rating });
+      const response = await api.post(
+        `/customer/service-requests/${serviceRequestId}/feedback`,
+        { feedback, rating }
+      );
       return response.data;
     } catch (error) {
-      console.error('Submit service feedback error:', error);
+      console.error("Submit service feedback error:", error);
       throw error;
     }
   },
@@ -170,10 +231,12 @@ export const customerService = {
   // Get water quality data for a subscription
   async getWaterQualityData(subscriptionId: string): Promise<WaterQualityData> {
     try {
-      const response = await api.get(`/customer/subscriptions/${subscriptionId}/water-quality`);
+      const response = await api.get(
+        `/customer/subscriptions/${subscriptionId}/water-quality`
+      );
       return response.data;
     } catch (error) {
-      console.error('Get water quality data error:', error);
+      console.error("Get water quality data error:", error);
       throw error;
     }
   },

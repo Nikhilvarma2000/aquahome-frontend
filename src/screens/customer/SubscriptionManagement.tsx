@@ -16,7 +16,6 @@ import { Feather } from '@expo/vector-icons';
 import { customerService } from '../../services/customerService';
 import { Subscription } from '../../types';
 import { useFocusEffect } from '@react-navigation/native';
-import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import SubscriptionCard from '../../components/SubscriptionCard';
 

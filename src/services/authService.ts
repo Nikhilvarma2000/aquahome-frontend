@@ -1,28 +1,15 @@
-import api from './api';
-import { User, LoginParams, RegisterParams, AuthResponse } from '../types';
+import api from "./api";
+import { User, LoginParams, RegisterParams, AuthResponse } from "../types";
 
 export const authService = {
   // Login user
   async login(credentials: LoginParams): Promise<AuthResponse> {
     try {
-      // const user: User = {
-      //   createdAt: "",
-      //   updatedAt: "",
-      //   email: "admin@ah.com",
-      //   id: "123",
-      //   name: "admin",
-      //   role: "admin"
-      // }
-      // const data: AuthResponse = {
-      //   token: "token",
-      //   user: user
-      // }
-      // return data;
-
-      const response = await api.post('/auth/login', credentials);
+      // console.log('Login credentials:', credentials);
+      const response = await api.post("/auth/login", credentials);
       return response.data;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   },
@@ -30,10 +17,10 @@ export const authService = {
   // Register a new user
   async register(userData: RegisterParams): Promise<AuthResponse> {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post("/auth/register", userData);
       return response.data;
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       throw error;
     }
   },
@@ -41,14 +28,14 @@ export const authService = {
   // Get current user profile with token
   async getCurrentUser(token: string): Promise<User> {
     try {
-      const response = await api.get('/auth/profile', {
+      const response = await api.get("/profile/v2", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       return response.data;
     } catch (error) {
-      console.error('Get current user error:', error);
+      console.error("Get current user error:", error);
       throw error;
     }
   },
@@ -56,23 +43,27 @@ export const authService = {
   // Update user profile
   async updateProfile(userData: Partial<User>, token: string): Promise<User> {
     try {
-      const response = await api.put('/auth/profile', userData, {
+      const response = await api.put("/auth/profile", userData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       return response.data;
     } catch (error) {
-      console.error('Update profile error:', error);
+      console.error("Update profile error:", error);
       throw error;
     }
   },
 
   // Change user password
-  async changePassword(currentPassword: string, newPassword: string, token: string): Promise<{ message: string }> {
+  async changePassword(
+    currentPassword: string,
+    newPassword: string,
+    token: string
+  ): Promise<{ message: string }> {
     try {
       const response = await api.post(
-        '/auth/change-password',
+        "/auth/change-password",
         { currentPassword, newPassword },
         {
           headers: {
@@ -82,7 +73,7 @@ export const authService = {
       );
       return response.data;
     } catch (error) {
-      console.error('Change password error:', error);
+      console.error("Change password error:", error);
       throw error;
     }
   },
@@ -90,24 +81,27 @@ export const authService = {
   // Request password reset
   async requestPasswordReset(email: string): Promise<{ message: string }> {
     try {
-      const response = await api.post('/auth/forgot-password', { email });
+      const response = await api.post("/auth/forgot-password", { email });
       return response.data;
     } catch (error) {
-      console.error('Request password reset error:', error);
+      console.error("Request password reset error:", error);
       throw error;
     }
   },
 
   // Reset password with token
-  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  async resetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
     try {
-      const response = await api.post('/auth/reset-password', {
+      const response = await api.post("/auth/reset-password", {
         token,
         newPassword,
       });
       return response.data;
     } catch (error) {
-      console.error('Reset password error:', error);
+      console.error("Reset password error:", error);
       throw error;
     }
   },
