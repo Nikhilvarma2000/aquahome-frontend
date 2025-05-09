@@ -118,6 +118,11 @@ const CustomerManagement = () => {
   // Filter options
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+
+  //Edit form for admin
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   
   // Selected customer for actions
   const [selectedCustomer, setSelectedCustomer] = useState<User | null>(null);

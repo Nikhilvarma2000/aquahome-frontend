@@ -2,11 +2,10 @@ import api from "./api";
 import { User, LoginParams, RegisterParams, AuthResponse } from "../types";
 
 export const authService = {
-  // Login user
-  async login(credentials: LoginParams): Promise<AuthResponse> {
+// 🔥 Corrected Login user
+async login(credentials: LoginParams): Promise<AuthResponse> {
     try {
-      // console.log('Login credentials:', credentials);
-      const response = await api.post("/auth/login", credentials);
+      const response = await api.post("/auth/login/v2", credentials); // ✅ corrected /v2
       return response.data;
     } catch (error) {
       console.error("Login error:", error);
@@ -14,10 +13,10 @@ export const authService = {
     }
   },
 
-  // Register a new user
+  // 🔥 Corrected Register user
   async register(userData: RegisterParams): Promise<AuthResponse> {
     try {
-      const response = await api.post("/auth/register", userData);
+      const response = await api.post("/auth/register/v2", userData); // ✅ corrected /v2
       return response.data;
     } catch (error) {
       console.error("Registration error:", error);
@@ -25,7 +24,7 @@ export const authService = {
     }
   },
 
-  // Get current user profile with token
+  // Get current user profile
   async getCurrentUser(token: string): Promise<User> {
     try {
       const response = await api.get("/profile/v2", {
@@ -40,7 +39,6 @@ export const authService = {
     }
   },
 
-  // Update user profile
   async updateProfile(userData: Partial<User>, token: string): Promise<User> {
     try {
       const response = await api.put("/auth/profile", userData, {
@@ -55,12 +53,7 @@ export const authService = {
     }
   },
 
-  // Change user password
-  async changePassword(
-    currentPassword: string,
-    newPassword: string,
-    token: string
-  ): Promise<{ message: string }> {
+  async changePassword(currentPassword: string, newPassword: string, token: string): Promise<{ message: string }> {
     try {
       const response = await api.post(
         "/auth/change-password",
@@ -78,7 +71,6 @@ export const authService = {
     }
   },
 
-  // Request password reset
   async requestPasswordReset(email: string): Promise<{ message: string }> {
     try {
       const response = await api.post("/auth/forgot-password", { email });
@@ -89,11 +81,7 @@ export const authService = {
     }
   },
 
-  // Reset password with token
-  async resetPassword(
-    token: string,
-    newPassword: string
-  ): Promise<{ message: string }> {
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     try {
       const response = await api.post("/auth/reset-password", {
         token,

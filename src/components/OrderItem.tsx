@@ -45,7 +45,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onPress }) => {
         <View style={styles.orderHeader}>
           <View>
             <Text style={[styles.orderNumber, { color: colors.textSecondary }]}>
-              Order #{order.id.substring(0, 8)}
+              Order #{order?.id ? `#${order.id.toString().substring(0, 8)}` : 'Order ID N/A'}
             </Text>
             <Text style={[styles.date, { color: colors.textSecondary }]}>
               {new Date(order.createdAt).toLocaleDateString()}
@@ -86,7 +86,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onPress }) => {
           <View style={styles.priceContainer}>
             <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Total:</Text>
             <Text style={[styles.price, { color: colors.text }]}>
-              ₹{order.totalAmount.toFixed(2)}
+              ₹{typeof order.totalAmount === 'number' ? order.totalAmount.toFixed(2) : '0.00'}
             </Text>
           </View>
           

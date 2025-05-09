@@ -20,78 +20,8 @@ import Loading from '../../components/ui/Loading';
 import OrderItem from '../../components/OrderItem';
 
 // This would be replaced with a real service in production
-const orderService = {
-  async getOrders(): Promise<Order[]> {
-    // Simulated API call
-    return [];
-  },
-  
-  async filterOrders(status?: string): Promise<Order[]> {
-    // Simulated API call
-    return [];
-  },
-  
-  async assignOrder(orderId: string, franchiseId: string): Promise<Order> {
-    // Simulated API call
-    console.log(`Assigning order ${orderId} to franchise ${franchiseId}`);
-    return {} as Order;
-  },
-  
-  async updateOrderStatus(orderId: string, status: string): Promise<Order> {
-    // Simulated API call
-    console.log(`Updating order ${orderId} status to ${status}`);
-    return {} as Order;
-  }
-};
 
-const franchiseService = {
-  async getFranchises(): Promise<User[]> {
-    // Simulated API call
-    return [
-      {
-        id: '1',
-        name: 'North Delhi Franchise',
-        email: 'northdelhi@aquahome.com',
-        role: 'franchise_owner',
-        phone: '+91 9876543210',
-        address: '123 Business Hub, Sector 4',
-        city: 'New Delhi',
-        state: 'Delhi',
-        zipCode: '110001',
-        createdAt: '2023-01-15T10:30:00Z',
-        updatedAt: '2023-05-20T14:45:00Z'
-      },
-      {
-        id: '2',
-        name: 'South Delhi Franchise',
-        email: 'southdelhi@aquahome.com',
-        role: 'franchise_owner',
-        phone: '+91 9876543211',
-        address: '456 Metro Complex, Sector 18',
-        city: 'New Delhi',
-        state: 'Delhi',
-        zipCode: '110016',
-        createdAt: '2023-02-10T09:15:00Z',
-        updatedAt: '2023-05-25T11:20:00Z'
-      },
-      {
-        id: '3',
-        name: 'Noida Franchise',
-        email: 'noida@aquahome.com',
-        role: 'franchise_owner',
-        phone: '+91 9876543212',
-        address: '789 Sector 62',
-        city: 'Noida',
-        state: 'Uttar Pradesh',
-        zipCode: '201301',
-        createdAt: '2023-03-05T14:20:00Z',
-        updatedAt: '2023-05-18T16:30:00Z'
-      }
-    ];
-  }
-};
-
-const OrderManagement = () => {
+  const OrderManagement = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
   
@@ -120,7 +50,7 @@ const OrderManagement = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const data = await orderService.getOrders();
+      const data = await adminService.getAllOrders();
       setOrders(data);
       setFilteredOrders(data);
     } catch (error) {
@@ -325,7 +255,7 @@ const OrderManagement = () => {
             {selectedOrder && (
               <View style={styles.orderSummary}>
                 <Text style={[styles.orderSummaryTitle, { color: colors.text }]}>
-                  Order #{selectedOrder.id.substring(0, 8)}
+                  Order #{selectedOrder?.id?.toString().substring(0, 8) || 'Unknown'}
                 </Text>
                 <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
                   Customer: {selectedOrder.user?.name || 'Unknown'}
@@ -407,7 +337,7 @@ const OrderManagement = () => {
             {selectedOrder && (
               <View style={styles.orderSummary}>
                 <Text style={[styles.orderSummaryTitle, { color: colors.text }]}>
-                  Order #{selectedOrder.id.substring(0, 8)}
+                 Order #{selectedOrder?.id?.toString().substring(0, 8) || 'Unknown'}
                 </Text>
                 <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
                   Customer: {selectedOrder.user?.name || 'Unknown'}

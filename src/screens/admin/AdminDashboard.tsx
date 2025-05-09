@@ -167,7 +167,7 @@ const AdminDashboard = () => {
         
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: colors.success }]}
-          onPress={() => navigation.navigate('FranchiseManagement' as never)}
+          onPress={() => navigation.navigate('FranchiseDashboard' as never)}
         >
           <Feather name="home" size={20} color="#fff" />
           <Text style={styles.actionButtonText}>Manage Franchises</Text>
@@ -175,14 +175,25 @@ const AdminDashboard = () => {
         
         <TouchableOpacity 
           style={[styles.actionButton, { backgroundColor: colors.warning }]}
-          onPress={() => navigation.navigate('ProductManagement' as never)}
+          onPress={() => navigation.navigate('ProductListing' as never)}
         >
           <Feather name="package" size={20} color="#fff" />
           <Text style={styles.actionButtonText}>Manage Products</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.info }]}
+          onPress={() => navigation.navigate('AdminSubscriptions' as never)}
+        >
+          <Feather name="repeat" size={20} color="#fff" />
+          <Text style={styles.actionButtonText}>Manage Subscriptions</Text>
+        </TouchableOpacity>
+
       </View>
+
+
       
-      {/* Recent Orders Section
+      {/* Recent Orders Section*/}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -194,17 +205,17 @@ const AdminDashboard = () => {
             variant="outline"
             size="small"
           />
-        </View> 
-        
+        </View>
+
         {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
           <FlatList
             data={dashboardData.recentOrders.slice(0, 3)}
             renderItem={({ item }) => (
-              <OrderItem 
-                order={item} 
-                onPress={() => 
+              <OrderItem
+                order={item}
+                onPress={() =>
                   navigation.navigate(
-                    'OrderDetails', 
+                    'OrderDetails',
                     { orderId: item.id }
                   )
                 }
@@ -222,7 +233,7 @@ const AdminDashboard = () => {
           </Card>
         )}
       </View>
-      
+
       // Recent Customers Section
       <View style={styles.section}>
         <View style={styles.sectionHeader}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Location from 'expo-location';
 import {
   View,
   Text,
@@ -88,7 +89,10 @@ const LocationManagement = () => {
   const [loading, setLoading] = useState(true);
   const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<string>('Fetching...');
+  const [locationLoading, setLocationLoading] = useState(false);
   const [editingArea, setEditingArea] = useState<ServiceArea | null>(null);
+
   
   // Form state
   const [areaName, setAreaName] = useState('');
@@ -111,12 +115,37 @@ const LocationManagement = () => {
     }
   };
   
-  const openAddModal = () => {
+  const openAddModal = async () => {
     setEditingArea(null);
     setAreaName('');
-    setZipCodesInput('');
+
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location access is required');
+      setZipCodesInput('');
+      setModalVisible(true);
+      return;
+    }
+
+    try {
+      let location = await Location.getCurrentPositionAsync({});
+      let address = await Location.reverseGeocodeAsync(location.coords);
+
+      if (address.length > 0) {
+        const { city, region, postalCode } = address[0];
+        if (postalCode) setZipCodesInput(postalCode);
+        if (city && region) setAreaName(`${city}, ${region}`);
+      } else {
+        setZipCodesInput('');
+      }
+    } catch (error) {
+      console.log('Error fetching ZIP:', error);
+      setZipCodesInput('');
+    }
+
     setModalVisible(true);
   };
+
   
   const openEditModal = (area: ServiceArea) => {
     setEditingArea(area);
@@ -173,6 +202,27 @@ const LocationManagement = () => {
       Alert.alert('Error', 'Failed to save service area');
     }
   };
+
+  //Fetch currentLocation
+
+  const fetchCurrentLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location access is required');
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    let address = await Location.reverseGeocodeAsync(location.coords);
+
+    if (address.length > 0) {
+      const { city, region, postalCode } = address[0];
+      setCurrentLocation(`${city}, ${region}, ${postalCode}`);
+    } else {
+      setCurrentLocation('Unknown Location');
+    }
+  };
+
   
   const handleRemoveArea = (area: ServiceArea) => {
     Alert.alert(
@@ -401,17 +451,31 @@ const LocationManagement = () => {
                     textAlignVertical: 'top',
                   },
                 ]}
-                placeholder="e.g. 110001, 110002, 110003"
+                placeholder="e.g. 508204, 508206, 500008"
                 placeholderTextColor={colors.textSecondary}
                 value={zipCodesInput}
                 onChangeText={setZipCodesInput}
                 multiline
                 numberOfLines={3}
               />
+
+              {zipCodesInput !== '' && (
+                <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+                  Detected Location:{" "}
+                  <Text style={{ fontWeight: 'bold', color: colors.text }}>
+                    {areaName}, {zipCodesInput}
+                  </Text>
+                </Text>
+              )}
+
               
-              <Text style={[styles.helperText, { color: colors.textSecondary }]}>
-                The app will automatically assign customers to your franchise based on these ZIP codes.
-              </Text>
+             <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+               The app will automatically assign customers in{" "}
+               <Text style={{ fontWeight: 'bold', color: colors.text }}>
+                 {zipCodesInput || 'your selected ZIP codes'}
+               </Text>{" "}
+               to your franchise.
+             </Text>
             </ScrollView>
             
             <View style={styles.modalFooter}>

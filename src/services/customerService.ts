@@ -1,28 +1,25 @@
 import api from "./api";
 import {
-  CustomerDashboardData,
-  Order,
-  Subscription,
-  ServiceRequest,
-  WaterQualityData,
-  User,
+CustomerDashboardData,
+Order,
+Subscription,
+ServiceRequest,
+WaterQualityData,
+User,
 } from "../types";
 
 export const customerService = {
-  // Get customer dashboard data
-  async getDashboardData(): Promise<CustomerDashboardData> {
+// Get customer dashboard data
+async getDashboardData(): Promise<CustomerDashboardData> {
     return {
-      user: undefined,
+      user: await this.getUser(),
       activeSubscriptions: (await this.getSubscriptions()).filter(
         (subscription) => subscription.status === "active"
       ),
       activeServiceRequests: (await this.getServiceRequests()).filter(
-        (serviceRequest) => {
-          return (
-            serviceRequest.status !== "completed" &&
-            serviceRequest.status !== "cancelled"
-          );
-        }
+        (serviceRequest) =>
+          serviceRequest.status !== "completed" &&
+          serviceRequest.status !== "cancelled"
       ),
       pendingOrders: (await this.getOrders()).filter(
         (order) => order.status === "pending"
@@ -40,7 +37,6 @@ export const customerService = {
     }
   },
 
-  // Get all orders for the customer
   async getOrders(): Promise<Order[]> {
     try {
       const response = await api.get("/orders/customer");
@@ -51,10 +47,9 @@ export const customerService = {
     }
   },
 
-  // Get a specific order
   async getOrderById(orderId: string): Promise<Order> {
     try {
-      const response = await api.get(`/customer/orders/${orderId}`);
+      const response = await api.get(`/orders/${orderId}`);
       return response.data;
     } catch (error) {
       console.error("Get order by id error:", error);
@@ -62,10 +57,9 @@ export const customerService = {
     }
   },
 
-  // Place a new order
   async placeOrder(orderData: Partial<Order>): Promise<Order> {
     try {
-      const response = await api.post("/customer/orders", orderData);
+      const response = await api.post("/orders", orderData);
       return response.data;
     } catch (error) {
       console.error("Place order error:", error);
@@ -73,18 +67,12 @@ export const customerService = {
     }
   },
 
-  // Cancel an order
   async cancelOrder(orderId: string): Promise<{ message: string }> {
-    try {
-      const response = await api.post(`/customer/orders/${orderId}/cancel`);
-      return response.data;
-    } catch (error) {
-      console.error("Cancel order error:", error);
-      throw error;
-    }
+    // Not implemented in backend. Placeholder.
+    console.warn("Cancel order not implemented on backend");
+    return { message: "Cancel order not implemented" };
   },
 
-  // Get all subscriptions for the customer
   async getSubscriptions(): Promise<Subscription[]> {
     try {
       const response = await api.get("/subscriptions/customer");
@@ -95,7 +83,6 @@ export const customerService = {
     }
   },
 
-  // Get a specific subscription
   async getSubscriptionById(subscriptionId: string): Promise<Subscription> {
     try {
       const response = await api.get(
@@ -108,7 +95,6 @@ export const customerService = {
     }
   },
 
-  // Cancel a subscription
   async cancelSubscription(
     subscriptionId: string
   ): Promise<{ message: string }> {
@@ -123,7 +109,6 @@ export const customerService = {
     }
   },
 
-  // Pause a subscription
   async pauseSubscription(
     subscriptionId: string,
     resumeDate?: string
@@ -140,7 +125,6 @@ export const customerService = {
     }
   },
 
-  // Resume a subscription
   async resumeSubscription(subscriptionId: string): Promise<Subscription> {
     try {
       const response = await api.post(
@@ -153,7 +137,6 @@ export const customerService = {
     }
   },
 
-  // Get all service requests for the customer
   async getServiceRequests(): Promise<ServiceRequest[]> {
     try {
       const response = await api.get("/services");
@@ -164,7 +147,6 @@ export const customerService = {
     }
   },
 
-  // Get a specific service request
   async getServiceRequestById(
     serviceRequestId: string
   ): Promise<ServiceRequest> {
@@ -179,7 +161,6 @@ export const customerService = {
     }
   },
 
-  // Create a new service request
   async createServiceRequest(
     serviceData: Partial<ServiceRequest>
   ): Promise<ServiceRequest> {
@@ -195,7 +176,6 @@ export const customerService = {
     }
   },
 
-  // Cancel a service request
   async cancelServiceRequest(
     serviceRequestId: string
   ): Promise<{ message: string }> {
@@ -210,7 +190,6 @@ export const customerService = {
     }
   },
 
-  // Submit feedback for a completed service request
   async submitServiceFeedback(
     serviceRequestId: string,
     feedback: string,
@@ -228,7 +207,6 @@ export const customerService = {
     }
   },
 
-  // Get water quality data for a subscription
   async getWaterQualityData(subscriptionId: string): Promise<WaterQualityData> {
     try {
       const response = await api.get(

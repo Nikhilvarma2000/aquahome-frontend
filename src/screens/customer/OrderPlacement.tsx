@@ -47,7 +47,7 @@ const OrderPlacement = () => {
         
         // For now, let's mock the product data
         setProduct({
-          id: productId || '1',
+          id: productId || '10',
           name: 'Premium RO Water Purifier',
           description: 'Advanced 7-stage purification with UV and RO technology',
           price: 15000,
@@ -94,45 +94,47 @@ const OrderPlacement = () => {
     }
   };
   
-  const handlePlaceOrder = async () => {
-    if (!product) return;
-    
-    if (!deliveryAddress.trim()) {
-      Alert.alert('Error', 'Please enter a delivery address');
-      return;
-    }
-    
-    try {
-      setSubmitting(true);
-      
-      const orderData: Partial<Order> = {
-        productId: product.id,
-        orderType: orderType || 'purchase',
-        deliveryAddress,
-        totalAmount: calculateTotal(),
-      };
-      
-      // In a real app, send this to your backend
-      await customerService.placeOrder(orderData);
-      
-      Alert.alert(
-        'Success',
-        'Your order has been placed successfully!',
-        [
-          {
-            text: 'View Orders',
-            onPress: () => navigation.navigate('CustomerDashboard' as never),
-          },
-        ]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to place order. Please try again.');
-      console.error(error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-  
+ const handlePlaceOrder = async () => {
+   if (!product) return;
+
+   if (!deliveryAddress.trim()) {
+     Alert.alert('Error', 'Please enter a delivery address');
+     return;
+   }
+
+   try {
+     setSubmitting(true);
+
+     const orderData = {
+       product_id: parseInt(product.id),        // backend expects int
+       franchise_id: 1,                         //  hardcoded for now (change later)
+       shipping_address: deliveryAddress,
+       billing_address: deliveryAddress,       // same for now
+       rental_duration: orderType === 'rental' ? 6 : 1,  // or ask user later
+       notes: specialInstructions || '',
+     };
+
+     // 🔥 Send to backend
+     await customerService.placeOrder(orderData);
+
+     Alert.alert(
+       'Order Placed ✅',
+       'Your order has been placed successfully!',
+       [
+         {
+           text: 'View Orders',
+           onPress: () => navigation.navigate('CustomerDashboard' as never),
+         },
+       ]
+     );
+   } catch (error) {
+     console.error('Order error:', error);
+     Alert.alert('Error ❌', 'Failed to place order. Please try again.');
+   } finally {
+     setSubmitting(false);
+   }
+ };
+
   if (loading) {
     return <Loading />;
   }

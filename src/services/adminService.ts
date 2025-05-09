@@ -1,63 +1,52 @@
 import {
   AdminDashboardData,
-  Franchise,
-  Order,
-  ServiceRequest,
-  Subscription,
-  User,
+Order,
+User,
 } from "@/types";
 import api from "./api";
 
 export const adminService = {
-  async getDashboardData(): Promise<AdminDashboardData> {
-    // Simulated API call
+
+async getDashboardData(): Promise<AdminDashboardData> {
+  try {
+    const [customers, orders] = await Promise.all([
+      this.getAllCustomers(),
+      this.getAllOrders(),
+    ]);
+
+    const totalRevenue = orders.reduce((sum, order) => {
+      if (order.status === "delivered" || order.status === "shipped") {
+        return sum + order.totalAmount;
+      }
+      return sum;
+    }, 0);
+
     return {
       stats: {
-        totalCustomers: (await this.getAllCustomers()).length,
-        totalOrders: (await this.getAllOrders()).length,
-        totalRevenue: await this.getTotalRevenue(),
-        activeSubscriptions: (await this.getAllSubscriptions()).filter(
-          (subscription) => subscription.status === "active"
-        ).length,
-        pendingServiceRequests: (await this.getAllServiceRequests()).filter(
-          (request) => request.status === "pending"
-        ).length,
-        franchiseApplications: (await this.getAllFranchises()).filter(
-          (franchise) => franchise.status === "pending"
-        ).length,
+        totalCustomers: customers.length,
+        totalOrders: orders.length,
+        totalRevenue,
+        activeSubscriptions: 0,
+        pendingServiceRequests: 0,
+        franchiseApplications: 0,
       },
+      recentOrders: orders.slice(0, 3), //
     };
-  },
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    throw error;
+  }
+},
+
 
   async getTotalRevenue(): Promise<number> {
     const totalOrders = await this.getAllOrders();
-    let totalRevenue = 0;
-    totalOrders.forEach((order) => {
+    return totalOrders.reduce((sum, order) => {
       if (order.status === "delivered" || order.status === "shipped") {
-        totalRevenue += order.totalAmount;
+        return sum + order.totalAmount;
       }
-    });
-    return totalRevenue;
-  },
-
-  async getAllFranchises(): Promise<Franchise[]> {
-    try {
-      const response = await api.get("/franchises");
-      return response.data;
-    } catch (error) {
-      console.error("Get Franchises error:", error);
-      throw error;
-    }
-  },
-
-  async getAllServiceRequests(): Promise<ServiceRequest[]> {
-    try {
-      const response = await api.get("/services");
-      return response.data;
-    } catch (error) {
-      console.error("Get Service Requests error:", error);
-      throw error;
-    }
+      return sum;
+    }, 0);
   },
 
   async getAllCustomers(): Promise<User[]> {
@@ -70,23 +59,34 @@ export const adminService = {
     }
   },
 
-  async getAllSubscriptions(): Promise<Subscription[]> {
-    try {
-      const response = await api.get("/admin/subscriptions");
-      return response.data;
-    } catch (error) {
-      console.error("Get subscriptions error:", error);
-      throw error;
-    }
-  },
-
   async getAllOrders(): Promise<Order[]> {
     try {
       const response = await api.get("/admin/orders");
+    console.log("📦 Orders Response from backend: ", response.data); // 👈 Add this line
       return response.data;
     } catch (error) {
       console.error("Get Orders error:", error);
       throw error;
     }
   },
+async updateOrderStatus(orderId: number | string, status: string): Promise<Order> {
+  try {
+    const response = await api.patch(`/orders/${orderId}`, { status });
+    return response.data;
+  } catch (error) {
+    console.error("Update order status error:", error);
+    throw error;
+  }
+},
+async assignOrder(orderId: number | string, franchiseId: number | string): Promise<Order> {
+  try {
+    const response = await api.patch(`/orders/${orderId}/assign`, {
+      franchise_id: franchiseId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Assign order error:", error);
+    throw error;
+  }
+},
 };

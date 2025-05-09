@@ -127,6 +127,7 @@ export interface MaintenanceSchedule {
 
 // Franchise related types
 export interface Franchise {
+  isActive: any;
   id: string;
   ownerId: string;
   name: string;

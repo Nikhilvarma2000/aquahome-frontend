@@ -29,7 +29,6 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  // Determine button background color based on variant
   const getBackgroundColor = () => {
     if (disabled) return '#ccc';
 
@@ -47,7 +46,6 @@ const Button: React.FC<ButtonProps> = ({
     }
   };
 
-  // Determine text color based on variant
   const getTextColor = () => {
     if (disabled) return '#666';
 
@@ -65,7 +63,6 @@ const Button: React.FC<ButtonProps> = ({
     }
   };
 
-  // Determine border based on variant
   const getBorderStyle = () => {
     switch (variant) {
       case 'outline':
@@ -76,7 +73,6 @@ const Button: React.FC<ButtonProps> = ({
         };
       case 'danger':
         return {
-          // borderWidth: variant === 'outline' ? 1 : 0,
           borderWidth: 1,
           borderColor: colors.error,
         };
@@ -85,7 +81,6 @@ const Button: React.FC<ButtonProps> = ({
     }
   };
 
-  // Determine padding based on size
   const getPadding = () => {
     switch (size) {
       case 'small':
@@ -107,7 +102,7 @@ const Button: React.FC<ButtonProps> = ({
         fullWidth && styles.fullWidth,
         style,
       ]}
-      onPress={onPress}
+      onPress={() => onPress()} // 🔥 🔥 🔥 IMPORTANT FIX 🔥 🔥 🔥
       disabled={disabled || loading}
       activeOpacity={0.7}
     >

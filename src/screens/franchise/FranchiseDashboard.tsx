@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import MapView, { Polygon, Marker, LatLng } from 'react-native-maps';
+import Modal from 'react-native-modal'; // If using this modal library
+import * as Location from 'expo-location';
+import { Platform } from 'react-native';
+
+
+
+
 import { 
   View, 
   Text, 
@@ -20,25 +28,10 @@ import OrderItem from '../../components/OrderItem';
 import ServiceRequestCard from '../../components/ServiceRequestCard';
 import SubscriptionCard from '../../components/SubscriptionCard';
 import { useNavigation } from '@react-navigation/native';
-
-// This would be a real service calling your API
-const franchiseService = {
-  async getDashboardData(): Promise<FranchiseDashboardData> {
-    // In a real app, this would call your API
-    return {
-      stats: {
-        totalCustomers: 42,
-        totalOrders: 156,
-        activeSubscriptions: 38,
-        pendingServiceRequests: 7
-      },
-      pendingOrders: [],
-      activeSubscriptions: [],
-      pendingServiceRequests: [],
-      recentActivity: []
-    };
-  }
-};
+import { franchiseService } from '../../services/franchiseService';  //adjust path
+import { Picker } from '@react-native-picker/picker';
+import { Franchise } from '@/types';
+import { TextInput } from 'react-native-gesture-handler';
 
 const FranchiseDashboard = () => {
   const { colors } = useTheme();
@@ -46,13 +39,57 @@ const FranchiseDashboard = () => {
   const navigation = useNavigation<any>();
   
   const [dashboardData, setDashboardData] = useState<FranchiseDashboardData | null>(null);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
-  const fetchDashboardData = async () => {
+  const [franchiseList, setFranchiseList] = useState<Franchise[]>([]);
+  const [editingFranchise, setEditingFranchise] = useState<any>(null);
+  const [polygonPoints, setPolygonPoints] = useState<LatLng[]>([]);
+  const [showPolygonModal, setShowPolygonModal] = useState(false);
+
+  // Removed unused states: franchises and selectedFranchise
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+
+   const [newFranchise, setNewFranchise] = useState({
+     name: '',
+     phone: '',
+     email: '',
+     city: '',
+     state: '',
+     zip_code: '',
+     address: '',
+     area_polygon: '',
+   });
+
+   //  Add fetchFranchises here
+    const fetchFranchises = async () => {
+      try {
+        const data = await franchiseService.getAllFranchises(); {/*you must define this in franchiseService*/}
+        setFranchiseList(data);
+      } catch (error) {
+        console.error('Error fetching franchises:', error);
+        Alert.alert('Error', 'Failed to load franchises');
+      }
+    };
+
+  useEffect(() => {
+    fetchDashboardData();
+    if (user?.role === 'admin') {
+      fetchFranchises();
+    }
+  }, []);
+
+
+  const fetchDashboardData = async (franchiseId?: string) => {
     try {
       setLoading(true);
-      const data = await franchiseService.getDashboardData();
+
+         console.log("📤 Fetching dashboard for franchiseId:", franchiseId);
+
+
+      const data = await franchiseService.getDashboardData(franchiseId);
       setDashboardData(data);
     } catch (error) {
       console.error('Error fetching franchise dashboard data:', error);
@@ -61,16 +98,68 @@ const FranchiseDashboard = () => {
       setLoading(false);
     }
   };
+
   
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchDashboardData();
     setRefreshing(false);
   };
+
+  const handleDeleteFranchise = async (franchiseId: number) => {
+    try {
+      await franchiseService.deleteFranchise(franchiseId);   //Ensure this method exists in franchiseService
+      Alert.alert("Success", "Franchise deleted successfully");
+      fetchFranchises(); // Refresh list
+    } catch (error) {
+      console.error("Delete error:", error);
+      Alert.alert("Error", "Failed to delete franchise");
+    }
+  };
   
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const handleUpdateFranchise = async () => {
+    if (!editingFranchise?.id) {
+      Alert.alert("Error", "Invalid franchise selected");
+      return;
+    }
+  
+    try {
+      const payload = {
+        name: editingFranchise.name,
+        phone: editingFranchise.phone,
+        area_polygon: editingFranchise.area_polygon,
+        address: editingFranchise.address || "",
+        city: editingFranchise.city || "",
+        state: editingFranchise.state || "",
+        zip_code: editingFranchise.zip_code || "",
+        email: editingFranchise.email || ""
+      };
+  
+      await franchiseService.updateFranchise(editingFranchise.id, payload);
+      Alert.alert("Success", "Franchise updated successfully");
+      setShowEditModal(false);
+      fetchFranchises(); // Refresh list
+    } catch (error) {
+      console.error("Update error:", error);
+      Alert.alert("Error", "Failed to update franchise");
+    }
+  };
+  
+  
+  const toggleFranchiseStatus = async (id: number, newStatus: boolean) => {
+    try {
+      await franchiseService.toggleFranchiseStatus(id, newStatus);
+      Alert.alert('Success', `Franchise ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      fetchFranchises();
+    } catch (err) {
+      Alert.alert('Error', 'Failed to update status');
+      console.error(err);
+    }
+  };
+  
+// useEffect(() => {
+//     fetchDashboardData();
+//   }, []);
   
   if (loading) {
     return <Loading />;
@@ -83,6 +172,140 @@ const FranchiseDashboard = () => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
+  {showEditModal && editingFranchise && (
+  <Modal
+    visible={true}
+    transparent
+    animationType="slide"
+    onRequestClose={() => setShowEditModal(false)}
+  >
+    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <View style={{ backgroundColor: 'white', margin: 20, borderRadius: 10, padding: 20 }}>
+        <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Edit Franchise</Text>
+
+        <TextInput
+          value={editingFranchise.name}
+          onChangeText={(text) => setEditingFranchise({ ...editingFranchise, name: text })}
+          style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
+          placeholder="Franchise Name"
+        />
+
+        <TextInput
+          value={editingFranchise.phone}
+          onChangeText={(text) => setEditingFranchise({ ...editingFranchise, phone: text })}
+          style={{ borderWidth: 1, padding: 10, marginBottom: 10 }}
+          placeholder="Phone Number"
+        />
+
+        <TextInput
+          value={editingFranchise.area_polygon}
+          onChangeText={(text) => setEditingFranchise({ ...editingFranchise, area_polygon: text })}
+          style={{ borderWidth: 1, padding: 10, height: 100 }}
+          multiline
+          placeholder="Area Polygon (GeoJSON)"
+        />
+       <Button title="Draw Polygon on Map" onPress={() => setShowPolygonModal(true)} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Button title="Cancel" onPress={() => setShowEditModal(false)} />
+          <Button title="Save" onPress={handleUpdateFranchise} />
+        </View>
+      </View>
+    </View>
+  </Modal>
+)}
+
+{showPolygonModal && (
+  <Modal isVisible={true}>
+    <View style={{ flex: 1, backgroundColor: 'white', borderRadius: 10 }}>
+      <Text style={{ fontSize: 18, fontWeight: 'bold', margin: 10 }}>Draw Area Polygon</Text>
+
+      {Platform.OS === 'web' ? (
+        <Text style={{ padding: 20, textAlign: 'center' }}>
+          Map drawing is not supported on web. Please use a mobile device.
+        </Text>
+      ) : (
+        <MapView
+          style={{ flex: 1 }}
+          initialRegion={{
+            latitude: 17.385044,
+            longitude: 78.486671,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+          onPress={(e) => {
+            setPolygonPoints([...polygonPoints, e.nativeEvent.coordinate]);
+          }}
+        >
+          {polygonPoints.length > 2 && (
+            <Polygon
+              coordinates={polygonPoints}
+              strokeColor="#000"
+              fillColor="rgba(0,200,0,0.3)"
+              strokeWidth={2}
+            />
+          )}
+          {polygonPoints.map((point, idx) => (
+            <Marker key={idx} coordinate={point} />
+          ))}
+        </MapView>
+      )}
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10 }}>
+        <Button title="Clear" onPress={() => setPolygonPoints([])} />
+        <Button
+          title="Save Polygon"
+          onPress={() => {
+            const geojson = {
+              type: "Polygon",
+              coordinates: [[...polygonPoints.map(p => [p.longitude, p.latitude]), [polygonPoints[0]?.longitude, polygonPoints[0]?.latitude]]]
+            };
+            setEditingFranchise({
+              ...editingFranchise,
+              area_polygon: JSON.stringify(geojson),
+            });
+            setShowPolygonModal(false);
+          }}
+        />
+      </View>
+    </View>
+  </Modal>
+)}
+
+  {showAddModal && (
+    <Modal
+      isVisible={true}
+      onBackdropPress={() => setShowAddModal(false)}
+    >
+      <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10 }}>
+        <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Add New Franchise</Text>
+
+        <TextInput placeholder="Name" style={styles.input} value={newFranchise.name} onChangeText={(text) => setNewFranchise({ ...newFranchise, name: text })} />
+        <TextInput placeholder="Phone" style={styles.input} value={newFranchise.phone} onChangeText={(text) => setNewFranchise({ ...newFranchise, phone: text })} />
+        <TextInput placeholder="Email" style={styles.input} value={newFranchise.email} onChangeText={(text) => setNewFranchise({ ...newFranchise, email: text })} />
+        <TextInput placeholder="City" style={styles.input} value={newFranchise.city} onChangeText={(text) => setNewFranchise({ ...newFranchise, city: text })} />
+        <TextInput placeholder="State" style={styles.input} value={newFranchise.state} onChangeText={(text) => setNewFranchise({ ...newFranchise, state: text })} />
+        <TextInput placeholder="Zip Code" style={styles.input} value={newFranchise.zip_code} onChangeText={(text) => setNewFranchise({ ...newFranchise, zip_code: text })} />
+        <TextInput placeholder="Address" style={styles.input} value={newFranchise.address} onChangeText={(text) => setNewFranchise({ ...newFranchise, address: text })} />
+        <Button title="Save" onPress={async () => {
+          try {
+            await franchiseService.createFranchise(newFranchise);
+            Alert.alert('Success', 'Franchise created');
+            setShowAddModal(false);
+            setNewFranchise({
+              name: '', phone: '', email: '', city: '', state: '', zip_code: '', address: '', area_polygon: ''
+            });
+            fetchFranchises();
+          } catch (err) {
+            console.error(err);
+            Alert.alert('Error', 'Failed to create franchise');
+          }
+        }} />
+      </View>
+    </Modal>
+  )}
+
+
+
       {/* Header section */}
       <View style={styles.headerSection}>
         <Text style={[styles.welcomeText, { color: colors.text }]}>
@@ -92,6 +315,43 @@ const FranchiseDashboard = () => {
           {dashboardData?.franchise?.name || 'Your Franchise'}
         </Text>
       </View>
+     {/*Only for admin*/}
+      {user?.role === 'admin' && (
+        <View style={{ marginHorizontal: 20, marginBottom: 10 }}>
+          <Text style={{ color: colors.text, marginBottom: 5 }}>
+            Select Franchise:
+          </Text>
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 8,
+              borderColor: colors.border,
+              borderWidth: 1,
+            }}
+          >
+           <Picker
+             selectedValue={selectedFranchiseId}
+             onValueChange={(value) => {
+               // Only call if value is valid (number or non-empty)
+               if (!value || value === 'undefined') return;
+
+               setSelectedFranchiseId(value);
+               fetchDashboardData(value);
+             }}
+           >
+             <Picker.Item label="-- Select --" value={null} /> {/* ✅ null is better than undefined here */}
+             {franchiseList.map((f, idx) => (
+               <Picker.Item key={f.id || idx} label={f.name || `Franchise ${idx + 1}`} value={String(f.id)} />
+             ))}
+           </Picker>
+
+          </View>
+        </View>
+      )}
+
+  
+        {/* Welcome message */}
+
       
       {/* Stats cards section */}
       <View style={styles.statsContainer}>
@@ -256,6 +516,67 @@ const FranchiseDashboard = () => {
           </Card>
         )}
       </View>
+
+      {user?.role === 'admin' && (
+  <View style={{ marginTop: 10, marginHorizontal: 20 }}>
+
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Manage Franchises</Text>
+      <TouchableOpacity onPress={() => setShowAddModal(true)}>
+        <Feather name="plus-circle" size={24} color={colors.primary} />
+      </TouchableOpacity>
+    </View>
+
+    {franchiseList.length === 0 ? (
+      <Text style={{ color: colors.textSecondary }}>No franchises found.</Text>
+    ) : (
+      franchiseList.map((f) => (
+
+         <Card key={f.id || `franchise-${Math.random()}`}>
+           <Text style={{ color: colors.textSecondary }}>
+             {f.city}, {f.state}
+           </Text>
+           <Text style={{ color: colors.textSecondary }}>
+             Phone: {f.phone}
+           </Text>
+           <Text style={{ color: colors.textSecondary }}>
+             Status: {f.isActive ? 'Active' : 'Inactive'}
+           </Text>
+
+           <View style={{ flexDirection: 'row', marginTop: 10, justifyContent: 'space-between' }}>
+             <Button
+               title="Edit"
+               size="small"
+               onPress={() => {
+                 setSelectedFranchiseId(String(f.id));
+                 setEditingFranchise({
+                   ...f,
+                   id: Number(f.id),
+                 });
+                 setShowEditModal(true);
+               }}
+             />
+             <Button
+               title="Delete"
+               size="small"
+               variant="danger"
+               onPress={handleUpdateFranchise}
+             />
+             <Button
+               title={f.isActive ? 'Deactivate' : 'Activate'}
+               size="small"
+               variant="outline"
+               onPress={() => toggleFranchiseStatus(Number(f.id), !f.isActive)}
+             />
+           </View>
+         </Card>
+
+
+               ))
+    )}
+  </View>
+)}
+
       
       {/* Recent Activity Section */}
       {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (

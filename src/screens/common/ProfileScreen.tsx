@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import { Feather } from '@expo/vector-icons';
 import { TextInput } from 'react-native-gesture-handler';
@@ -11,6 +12,7 @@ import { validationService } from '../../services/validationService';
 const ProfileScreen = () => {
   const { user, updateUserProfile, logout } = useAuth();
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -145,28 +147,34 @@ const ProfileScreen = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    console.log('Logout button clicked');
     Alert.alert(
       'Confirm Logout',
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
+        {
+          text: 'Logout',
+          style: 'destructive',
           onPress: async () => {
             try {
-              await logout();
+              await logout(); // clear token & user
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' as never }], // ✅ send back to Login screen
+              });
+              console.log('Successfully logged out');
             } catch (error) {
               Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           },
-          style: 'destructive'
         },
       ]
     );
   };
 
-  const getRoleDisplay = (role: string) => {
+ const getRoleDisplay = (role: string) => {
     switch (role) {
       case 'admin':
         return 'Administrator';
