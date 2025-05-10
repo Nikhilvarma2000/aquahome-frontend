@@ -10,6 +10,8 @@ import { Feather } from '@expo/vector-icons';
 import AdminDashboard from '../screens/admin/AdminDashboard';
 import CustomerManagement from '../screens/admin/CustomerManagement';
 import OrderManagement from '../screens/admin/OrderManagement';
+import AdminSubscriptions from '../screens/admin/AdminSubscriptions';
+
 
 //import FranchiseManagement from '../screens/admin/FranchiseManagement';
 //import SystemSettings from '../screens/admin/SystemSettings';
@@ -29,6 +31,8 @@ import OrderPlacement from '../screens/customer/OrderPlacement';
 import SubscriptionManagement from '../screens/customer/SubscriptionManagement';
 import ServiceRequest from '../screens/customer/ServiceRequest';
 import OrderDetailsScreen from '../screens/customer/OrderDetailsScreen';
+import SubscriptionDetails from '../screens/customer/SubscriptionDetails';
+
 
 
 // Service Agent Screens
@@ -208,6 +212,8 @@ const CustomerStackNavigator = () => {
       <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
       <Stack.Screen name="ProductListing" component={ProductListing} />
       <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} options={{ title: 'Order Details' }} />
+      <Stack.Screen name="SubscriptionDetails" component={SubscriptionDetails} options={{ title: 'Subscription Details' }} />
+
 
 
 
@@ -233,6 +239,8 @@ const AdminStackNavigator = () => {
       <Stack.Screen name="ProductListing" component={ProductListing} options={{ title: "Products" }} />
       <Stack.Screen name="FranchiseDashboard" component={FranchiseDashboard} options={{ title: "Manage Franchises" }} />
       <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} options={{ title: 'Order Details' }} />
+      <Stack.Screen name="AdminSubscriptions" component={AdminSubscriptions} options={{ title: 'Manage Subscriptions' }} />
+
 
     </Stack.Navigator>
   );

@@ -54,10 +54,10 @@ export interface Product {
 
 // Order related types
 export interface Order {
-  id: string;
-  userId: string;
-  productId: string;
-  franchiseId?: string;
+  id: number;
+  userId: number;
+  productId: number;
+  franchiseId?: number;
   status:
     | "pending"
     | "confirmed"
@@ -78,10 +78,10 @@ export interface Order {
 
 // Subscription related types
 export interface Subscription {
-  id: string;
-  userId: string;
-  productId: string;
-  franchiseId?: string;
+  id: number;
+  userId: number;
+  productId: number;
+  franchiseId?: number;
   status: "active" | "inactive" | "paused" | "cancelled";
   startDate: string;
   endDate?: string;
@@ -96,10 +96,10 @@ export interface Subscription {
 
 // Service related types
 export interface ServiceRequest {
-  id: string;
-  userId: string;
-  subscriptionId: string;
-  franchiseId?: string;
+  id: number;
+  userId: number;
+  subscriptionId: number;
+  franchiseId?: number;
   agentId?: string;
   type: "maintenance" | "repair" | "installation" | "removal";
   status: "pending" | "assigned" | "scheduled" | "completed" | "cancelled";
@@ -116,7 +116,7 @@ export interface ServiceRequest {
 }
 
 export interface MaintenanceSchedule {
-  id: string;
+  id: number;
   subscriptionId: string;
   scheduledDate: string;
   status: "pending" | "completed" | "missed";
@@ -128,7 +128,7 @@ export interface MaintenanceSchedule {
 // Franchise related types
 export interface Franchise {
   isActive: any;
-  id: string;
+  id: number;
   ownerId: string;
   name: string;
   address: string;

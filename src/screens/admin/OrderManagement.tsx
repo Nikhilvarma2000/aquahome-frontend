@@ -1,56 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  Modal,
-  TextInput,
-  ScrollView,
-} from 'react-native';
-import { useTheme } from '../../hooks/useTheme';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import { Order, User } from '../../types';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Loading from '../../components/ui/Loading';
-import OrderItem from '../../components/OrderItem';
+ import React, { useState, useEffect } from 'react';
+  import { adminService } from '../../services/adminService';
+  import { franchiseService } from '../../services/franchiseService';
+  import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TouchableOpacity,
+    Alert,
+    Modal,
+    TextInput,
+    ScrollView,
+  } from 'react-native';
+  import { useTheme } from '../../hooks/useTheme';
+  import { useNavigation } from '@react-navigation/native';
+  import { Feather } from '@expo/vector-icons';
+  import { Order, User } from '../../types';
+  import Card from '../../components/ui/Card';
+  import Button from '../../components/ui/Button';
+  import Loading from '../../components/ui/Loading';
+  import OrderItem from '../../components/OrderItem';
 
-// This would be replaced with a real service in production
+  // This would be replaced with a real service in production
 
-  const OrderManagement = () => {
-  const { colors } = useTheme();
-  const navigation = useNavigation<any>();
-  
-  const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  
-  // Selected order for actions
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [assignModalVisible, setAssignModalVisible] = useState(false);
-  const [statusModalVisible, setStatusModalVisible] = useState(false);
-  const [franchises, setFranchises] = useState<User[]>([]);
-  const [selectedFranchiseId, setSelectedFranchiseId] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
-  
-  useEffect(() => {
-    fetchOrders();
-    fetchFranchises();
-  }, []);
-  
-  useEffect(() => {
-    applyFilters();
-  }, [selectedFilter, orders]);
-  
+    const OrderManagement = () => {
+    const { colors } = useTheme();
+    const navigation = useNavigation<any>();
+
+    const [loading, setLoading] = useState(true);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+    const [selectedFilter, setSelectedFilter] = useState('all');
+
+    // Selected order for actions
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [assignModalVisible, setAssignModalVisible] = useState(false);
+    const [statusModalVisible, setStatusModalVisible] = useState(false);
+    const [franchises, setFranchises] = useState<User[]>([]);
+    const [selectedFranchiseId, setSelectedFranchiseId] = useState<string>('');
+    const [selectedStatus, setSelectedStatus] = useState<string>('');
+
+    useEffect(() => {
+      fetchOrders();
+      fetchFranchises();
+    }, []);
+
+    useEffect(() => {
+      applyFilters();
+    }, [selectedFilter, orders]);
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const data = await adminService.getAllOrders();
+
+      const rawData = await adminService.getAllOrders();
+
+      // 👇 Flatten if needed (based on actual response shape)
+      const data = rawData.map(item => {
+        if (item.order) {
+          return {
+            ...item.order,
+            product: item.product,
+          };
+        }
+        return item; // if already flat
+      });
+
+      console.log(" Final orders after flattening:", data);
+
       setOrders(data);
       setFilteredOrders(data);
     } catch (error) {
@@ -60,7 +77,7 @@ import OrderItem from '../../components/OrderItem';
       setLoading(false);
     }
   };
-  
+
   const fetchFranchises = async () => {
     try {
       const data = await franchiseService.getFranchises();
@@ -152,15 +169,19 @@ import OrderItem from '../../components/OrderItem';
     }
   };
   
-  const renderOrderItem = ({ item }: { item: Order }) => (
-    <OrderItem
-      order={item}
-      onPress={() => navigation.navigate(
-        'OrderDetails', 
-        { orderId: item.id }
-      )}
-    />
-  );
+  const renderOrderItem = ({ item }: { item: Order }) => {
+    console.log("💥 Rendered order item:", item); // Add this
+    return (
+      <OrderItem
+        order={item}
+        onPress={() => {
+          console.log("Navigating with order ID:", item.id); // 👈 Track value
+          navigation.navigate('OrderDetails', { orderId: item.id });
+        }}
+      />
+    );
+  };
+
   
   const FilterTab = ({ title, value, current }: { title: string, value: string, current: string }) => (
     <TouchableOpacity
@@ -217,7 +238,7 @@ import OrderItem from '../../components/OrderItem';
       <FlatList
         data={filteredOrders}
         renderItem={renderOrderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

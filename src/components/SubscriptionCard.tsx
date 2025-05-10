@@ -7,7 +7,8 @@ import Card from './ui/Card';
 
 interface SubscriptionCardProps {
   subscription: Subscription;
-  onPress?: () => void;
+    onPress?: () => void;
+
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ subscription, onPress }) => {
@@ -38,7 +39,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ subscription, onPre
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Text style={[styles.productName, { color: colors.text }]}>
-              {subscription.product?.name || 'Water Purifier Subscription'}
+              {subscription.productName || 'Water Purifier Subscription'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
               <Text style={styles.statusText}>
@@ -59,14 +60,14 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ subscription, onPre
           <View style={styles.detailRow}>
             <Feather name="refresh-cw" size={16} color={colors.textSecondary} />
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              Renewal: {formatDate(subscription.renewalDate)}
+              Renewal: {formatDate(subscription.nextBillingDate)}
             </Text>
           </View>
           
           <View style={styles.detailRow}>
             <Feather name="credit-card" size={16} color={colors.textSecondary} />
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              Monthly Fee: ₹{subscription.monthlyFee.toFixed(2)}
+               Monthly Fee: ₹{subscription.monthlyRent.toFixed(2)}
             </Text>
           </View>
         </View>

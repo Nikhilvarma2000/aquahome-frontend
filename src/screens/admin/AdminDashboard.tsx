@@ -210,17 +210,23 @@ const AdminDashboard = () => {
         {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 ? (
           <FlatList
             data={dashboardData.recentOrders.slice(0, 3)}
-            renderItem={({ item }) => (
-              <OrderItem
-                order={item}
-                onPress={() =>
-                  navigation.navigate(
-                    'OrderDetails',
-                    { orderId: item.id }
-                  )
-                }
-              />
-            )}
+            renderItem={({ item }) => {
+              console.log('Pending order item:', item);
+              return (
+                <OrderItem
+                  order={item}
+                  onPress={() => {
+                    console.log('Navigating with order ID:', item?.id);
+                    if (item?.id) {
+                      navigation.navigate('OrderDetails', { orderId: item.id });
+                    } else {
+                      Alert.alert("Error", "Order ID missing in item");
+                    }
+                  }}
+                />
+              );
+            }}
+
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
           />

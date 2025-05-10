@@ -8,6 +8,7 @@ import { useTheme } from '../../hooks/useTheme';
 
 const OrderDetailsScreen = () => {
   const route = useRoute<any>();
+  console.log("Order ID from route params: ", route.params);
   const { orderId } = route.params;
   const { colors } = useTheme();
 
@@ -27,6 +28,11 @@ const OrderDetailsScreen = () => {
   };
 
   useEffect(() => {
+    if (!orderId || typeof orderId !== 'number') {
+      Alert.alert('Invalid Order ID');
+      setLoading(false);
+      return;
+    }
     fetchOrder();
   }, []);
 

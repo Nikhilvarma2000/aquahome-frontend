@@ -89,4 +89,14 @@ async assignOrder(orderId: number | string, franchiseId: number | string): Promi
     throw error;
   }
 },
+async getSubscriptionsByCustomer(customerId: string): Promise<any[]> {
+  try {
+    const response = await api.get(`/admin/customers/${customerId}/subscriptions`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch subscriptions by customer:", error);
+    throw error;
+  }
+},
+
 };

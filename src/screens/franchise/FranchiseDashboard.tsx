@@ -449,34 +449,36 @@ const FranchiseDashboard = () => {
           />
         </View>
         
-        {dashboardData?.pendingOrders && dashboardData.pendingOrders.length > 0 ? (
-          <FlatList
-            data={dashboardData.pendingOrders}
-            renderItem={({ item }) => (
-              <OrderItem 
-                order={item} 
-                onPress={() => 
-                  navigation.navigate(
-                    'OrderDetails', 
-                    { orderId: item.id }
-                  )
+      {dashboardData?.pendingOrders && dashboardData.pendingOrders.length > 0 ? (
+        <FlatList
+          data={dashboardData.pendingOrders}
+          renderItem={({ item }) => (
+            <OrderItem
+              order={item}
+              onPress={() => {
+                console.log('Navigating with Order ID:', item?.id);
+                if (item?.id) {
+                  navigation.navigate('OrderDetails', { orderId: item.id });
+                } else {
+                  Alert.alert('Error', 'Order ID is missing');
                 }
-              />
-            )}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
-        ) : (
-          <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-            <Feather name="inbox" size={24} color={colors.textSecondary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No pending orders at the moment
-            </Text>
-          </Card>
-        )}
-      </View>
-      
-      {/* Service Requests Section */}
+              }}
+            />
+          )}
+          keyExtractor={(item) =>item?.id?.toString() ?? Math.random().toString()}
+          scrollEnabled={false}
+        />
+      ) : (
+        <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+          <Feather name="inbox" size={24} color={colors.textSecondary} />
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            No pending orders at the moment
+          </Text>
+        </Card>
+      )}
+    </View>
+
+  {/* Service Requests Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -617,7 +619,7 @@ const FranchiseDashboard = () => {
           </Card>
         </View>
       ) : null}
-      
+
       <View style={styles.footer}>
         <Button
           title="Manage Team"

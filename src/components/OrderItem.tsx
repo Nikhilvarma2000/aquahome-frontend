@@ -54,7 +54,7 @@ const OrderItem: React.FC<OrderItemProps> = ({ order, onPress }) => {
           
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
             <Text style={styles.statusText}>
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+               {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Unknown'}
             </Text>
           </View>
         </View>

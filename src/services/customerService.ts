@@ -85,9 +85,7 @@ async getDashboardData(): Promise<CustomerDashboardData> {
 
   async getSubscriptionById(subscriptionId: string): Promise<Subscription> {
     try {
-      const response = await api.get(
-        `/customer/subscriptions/${subscriptionId}`
-      );
+       const response = await api.get(`/subscriptions/${subscriptionId}`)
       return response.data;
     } catch (error) {
       console.error("Get subscription by id error:", error);

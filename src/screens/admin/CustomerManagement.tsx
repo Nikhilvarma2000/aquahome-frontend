@@ -17,83 +17,17 @@ import { User } from '../../types';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
+import { adminService } from '@/services/adminService';
+
+
 
 // This would be replaced with a real service in production
 const customerService = {
-  async getCustomers(): Promise<User[]> {
-    // Simulated API call
-    return [
-      {
-        id: '1',
-        name: 'Rajesh Kumar',
-        email: 'rajesh.kumar@example.com',
-        role: 'customer',
-        phone: '+91 9876543210',
-        address: '123 Main St, Sector 4',
-        city: 'New Delhi',
-        state: 'Delhi',
-        zipCode: '110001',
-        createdAt: '2023-02-15T10:30:00Z',
-        updatedAt: '2023-05-20T14:45:00Z'
-      },
-      {
-        id: '2',
-        name: 'Priya Sharma',
-        email: 'priya.sharma@example.com',
-        role: 'customer',
-        phone: '+91 9876543211',
-        address: '456 Park Avenue, Sector 18',
-        city: 'Noida',
-        state: 'Uttar Pradesh',
-        zipCode: '201301',
-        createdAt: '2023-03-10T09:15:00Z',
-        updatedAt: '2023-05-25T11:20:00Z'
-      },
-      {
-        id: '3',
-        name: 'Amit Singh',
-        email: 'amit.singh@example.com',
-        role: 'customer',
-        phone: '+91 9876543212',
-        address: '789 Lakeview Apts, Whitefield',
-        city: 'Bengaluru',
-        state: 'Karnataka',
-        zipCode: '560066',
-        createdAt: '2023-01-05T14:20:00Z',
-        updatedAt: '2023-05-18T16:30:00Z'
-      },
-      {
-        id: '4',
-        name: 'Sneha Patel',
-        email: 'sneha.patel@example.com',
-        role: 'customer',
-        phone: '+91 9876543213',
-        address: '101 Silver Heights, Bandra',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        zipCode: '400050',
-        createdAt: '2023-04-12T11:45:00Z',
-        updatedAt: '2023-05-22T17:10:00Z'
-      },
-      {
-        id: '5',
-        name: 'Vijay Reddy',
-        email: 'vijay.reddy@example.com',
-        role: 'customer',
-        phone: '+91 9876543214',
-        address: '234 Green Valley, Jubilee Hills',
-        city: 'Hyderabad',
-        state: 'Telangana',
-        zipCode: '500033',
-        createdAt: '2023-03-25T13:00:00Z',
-        updatedAt: '2023-05-24T12:40:00Z'
-      }
-    ];
-  },
-  
+
+
   async searchCustomers(query: string): Promise<User[]> {
     // Simulated API call
-    const allCustomers = await this.getCustomers();
+    const data = await adminService.getAllCustomers(); // ✅ Real API call
     const lowerQuery = query.toLowerCase();
     
     return allCustomers.filter(customer => 
@@ -140,8 +74,7 @@ const CustomerManagement = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const data = await customerService.getCustomers();
-      setCustomers(data);
+      const data = await adminService.getAllCustomers();      // ✅ Real backend call
       setFilteredCustomers(data);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -151,67 +84,63 @@ const CustomerManagement = () => {
     }
   };
   
-  const handleSearch = async (text: string) => {
+  const handleSearch = (text: string) => {
     setSearchQuery(text);
     if (!text.trim()) {
       setFilteredCustomers(customers);
       return;
     }
-    
-    try {
-      const results = await customerService.searchCustomers(text);
-      setFilteredCustomers(results);
-    } catch (error) {
-      console.error('Error searching customers:', error);
-    }
+
+    const lowerQuery = text.toLowerCase();
+    const results = customers.filter(customer =>
+      customer.name?.toLowerCase().includes(lowerQuery) ||
+      customer.email?.toLowerCase().includes(lowerQuery) ||
+      customer.phone?.includes(text) ||
+      customer.city?.toLowerCase().includes(lowerQuery) ||
+      customer.zipCode?.includes(text)
+    );
+
+    setFilteredCustomers(results);
   };
-  
   const clearSearch = () => {
     setSearchQuery('');
     setFilteredCustomers(customers);
   };
+
   
   const applyFilters = () => {
     let results = [...customers];
-    
+
+    // 🔹 Filter first (e.g. active, inactive, recent)
+    if (selectedFilter !== 'all') {
+      if (selectedFilter === 'recent') {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        results = results.filter(customer =>
+          new Date(customer.createdAt) >= thirtyDaysAgo
+        );
+      } else if (selectedFilter === 'active') {
+       results = results.filter(customer => customer.activity_status === 'active');
+      } else if (selectedFilter === 'inactive') {
+        results = results.filter(customer => customer.activity_status === 'inactive');
+      }
+    }
+
+    // 🔹 Then apply search (on filtered results)
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
-      results = results.filter(customer => 
-        customer.name.toLowerCase().includes(lowerQuery) ||
-        customer.email.toLowerCase().includes(lowerQuery) ||
+      results = results.filter(customer =>
+        customer.name?.toLowerCase().includes(lowerQuery) ||
+        customer.email?.toLowerCase().includes(lowerQuery) ||
         customer.phone?.includes(searchQuery) ||
-        customer.city?.toLowerCase().includes(lowerQuery)
+        customer.city?.toLowerCase().includes(lowerQuery) ||
+        customer.zipCode?.includes(searchQuery)
       );
     }
-    
-    if (selectedFilter !== 'all') {
-      results = results.filter(customer => {
-        if (selectedFilter === 'active') {
-          // Logic to determine active customers (e.g., with active subscriptions)
-          return true;
-        } else if (selectedFilter === 'inactive') {
-          // Logic to determine inactive customers
-          return false;
-        } else if (selectedFilter === 'recent') {
-          // Customers added in last 30 days
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          return new Date(customer.createdAt) >= thirtyDaysAgo;
-        }
-        return true;
-      });
-    }
-    
+
     setFilteredCustomers(results);
   };
-  
-  const viewCustomerDetails = (customer: User) => {
-    navigation.navigate(
-      'CustomerDetails', 
-      { userId: customer.id }
-    );
-  };
-  
+
   const showActionModal = (customer: User) => {
     setSelectedCustomer(customer);
     setActionModalVisible(true);
