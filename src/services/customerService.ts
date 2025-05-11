@@ -1,16 +1,16 @@
 import api from "./api";
 import {
-CustomerDashboardData,
-Order,
-Subscription,
-ServiceRequest,
-WaterQualityData,
-User,
+  CustomerDashboardData,
+  Order,
+  Subscription,
+  ServiceRequest,
+  WaterQualityData,
+  User,
 } from "../types";
 
 export const customerService = {
-// Get customer dashboard data
-async getDashboardData(): Promise<CustomerDashboardData> {
+  // Get customer dashboard data
+  async getDashboardData(): Promise<CustomerDashboardData> {
     return {
       user: await this.getUser(),
       activeSubscriptions: (await this.getSubscriptions()).filter(
@@ -85,7 +85,7 @@ async getDashboardData(): Promise<CustomerDashboardData> {
 
   async getSubscriptionById(subscriptionId: string): Promise<Subscription> {
     try {
-       const response = await api.get(`/subscriptions/${subscriptionId}`)
+      const response = await api.get(`/subscriptions/${subscriptionId}`);
       return response.data;
     } catch (error) {
       console.error("Get subscription by id error:", error);
