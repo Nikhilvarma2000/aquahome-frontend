@@ -216,4 +216,41 @@ export const customerService = {
       throw error;
     }
   },
+
+  // Generate Initial Payment Razorpay Order
+  async generateInitialPaymentOrder(orderId: number) {
+    const response = await api.post("/payments/generate-order", { order_id: orderId });
+    return response.data;
+  },
+
+  //  Generate Monthly Subscription Razorpay Order
+  async generateMonthlyPayment(subscriptionId: number) {
+    const response = await api.post("/payments/generate-monthly", { subscription_id: subscriptionId });
+    return response.data;
+  },
+
+  //  Verify Payment After Success
+  async verifyPayment(data: {
+    payment_id: string;
+    order_id: string;
+    signature: string;
+    aquahome_order_id?: number;
+    subscription_id?: number;
+  }) {
+    const response = await api.post("/payments/verify", data);
+    return response.data;
+  },
+
+  //  Get Payment History for Logged-in User
+  async getPaymentHistory() {
+    const response = await api.get("/payments");
+    return response.data;
+  },
+
+  //  Get Payment By ID
+  async getPaymentById(id: number) {
+    const response = await api.get(`/payments/${id}`);
+    return response.data;
+  },
+
 };

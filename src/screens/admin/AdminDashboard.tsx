@@ -189,6 +189,14 @@ const AdminDashboard = () => {
           <Text style={styles.actionButtonText}>Manage Subscriptions</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.info }]}
+          onPress={() => navigation.navigate('ServiceRequests' as never)}
+        >
+          <Feather name="repeat" size={20} color="#fff" />
+          <Text style={styles.actionButtonText}>Service Requests</Text>
+        </TouchableOpacity>
+
       </View>
 
 

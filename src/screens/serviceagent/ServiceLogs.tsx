@@ -18,6 +18,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { ServiceRequest } from '../../types';
 import { useFocusEffect } from '@react-navigation/native';
+import { agentService } from '../../services/agentService';
 
 const ServiceLogs = ({ navigation }: any) => {
   const { colors } = useTheme();
@@ -32,162 +33,9 @@ const ServiceLogs = ({ navigation }: any) => {
   // Simulated fetch completed services function
   const fetchCompletedServices = async () => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sample data - in a real app, this would come from an API
-      const serviceData: ServiceRequest[] = [
-        {
-          id: '1',
-          userId: 'cust1',
-          subscriptionId: 'sub1',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'maintenance',
-          status: 'completed',
-          description: 'Regular 3-month maintenance for RO purifier. Replaced filters and cleaned tank.',
-          scheduledDate: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-          completionDate: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          feedback: 'Great service, very professional.',
-          rating: 5,
-          createdAt: new Date(new Date().getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          user: {
-            id: 'cust1',
-            name: 'Rahul Sharma',
-            email: 'rahul.sharma@example.com',
-            role: 'customer',
-            phone: '9876543210',
-            address: '123 Main Street, Apartment 4B',
-            city: 'Mumbai',
-            state: 'Maharashtra',
-            zipCode: '400001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          subscription: {
-            id: 'sub1',
-            userId: 'cust1',
-            productId: 'prod1',
-            status: 'active',
-            startDate: new Date(new Date().getTime() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-            renewalDate: new Date(new Date().getTime() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-            monthlyFee: 499,
-            paymentStatus: 'paid',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            product: {
-              id: 'prod1',
-              name: 'AquaPure RO+UV Water Purifier',
-              description: 'Advanced water purifier with RO+UV technology',
-              price: 15999,
-              rentalPrice: 499,
-              installationCharge: 500,
-              maintenanceFrequency: 90,
-              imageUrl: 'https://example.com/aquapure.jpg',
-              features: ['RO+UV Purification', '7-Stage Filtration', 'Digital Display'],
-              specifications: {
-                capacity: '8 liters',
-                purificationTechnology: 'RO+UV+UF+TDS',
-                dimensions: '40 x 25 x 50 cm',
-                weight: '5 kg',
-              },
-              inStock: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          }
-        },
-        {
-          id: '2',
-          userId: 'cust2',
-          subscriptionId: 'sub2',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'repair',
-          status: 'completed',
-          description: 'Fixed water leakage issue by replacing damaged valve and checking all connections.',
-          scheduledDate: new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days ago
-          completionDate: new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          feedback: 'Fixed the issue quickly. Very satisfied.',
-          rating: 4,
-          createdAt: new Date(new Date().getTime() - 16 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          user: {
-            id: 'cust2',
-            name: 'Priya Patel',
-            email: 'priya.patel@example.com',
-            role: 'customer',
-            phone: '8765432109',
-            address: '456 Park Avenue',
-            city: 'Pune',
-            state: 'Maharashtra',
-            zipCode: '411001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        },
-        {
-          id: '3',
-          userId: 'cust3',
-          subscriptionId: 'sub3',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'installation',
-          status: 'completed',
-          description: 'New RO+UV purifier installation with full setup and customer training.',
-          scheduledDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-          completionDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          feedback: 'The installation was done perfectly. The technician explained everything clearly.',
-          rating: 5,
-          createdAt: new Date(new Date().getTime() - 32 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          user: {
-            id: 'cust3',
-            name: 'Amit Singh',
-            email: 'amit.singh@example.com',
-            role: 'customer',
-            phone: '7654321098',
-            address: '789 Lake View Road',
-            city: 'Bangalore',
-            state: 'Karnataka',
-            zipCode: '560001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        },
-        {
-          id: '4',
-          userId: 'cust4',
-          subscriptionId: 'sub4',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'maintenance',
-          status: 'completed',
-          description: 'Annual maintenance with full system check and filter replacement.',
-          scheduledDate: new Date(new Date().getTime() - 45 * 24 * 60 * 60 * 1000).toISOString(), // 45 days ago
-          completionDate: new Date(new Date().getTime() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          feedback: 'Good service but a bit delayed.',
-          rating: 3,
-          createdAt: new Date(new Date().getTime() - 50 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(new Date().getTime() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-          user: {
-            id: 'cust4',
-            name: 'Meera Joshi',
-            email: 'meera.joshi@example.com',
-            role: 'customer',
-            phone: '6543210987',
-            address: '101 Riverside Apartments',
-            city: 'Delhi',
-            state: 'Delhi',
-            zipCode: '110001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        }
-      ];
-      
-      setCompletedServices(serviceData);
+      const response = await agentService.getLogs();
+      const data = response.data.filter(task => task.status === 'completed');
+      setCompletedServices(data);
     } catch (error) {
       console.error('Error fetching service logs:', error);
       Alert.alert('Error', 'Failed to load service logs. Please try again.');
@@ -196,6 +44,7 @@ const ServiceLogs = ({ navigation }: any) => {
       setRefreshing(false);
     }
   };
+
 
   // Fetch data when screen comes into focus
   useFocusEffect(

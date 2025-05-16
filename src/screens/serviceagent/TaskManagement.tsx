@@ -19,6 +19,8 @@ import Button from '../../components/ui/Button';
 import ServiceRequestCard from '../../components/ServiceRequestCard';
 import { ServiceRequest } from '../../types';
 import { useFocusEffect } from '@react-navigation/native';
+import { agentService } from '../../services/agentService';
+
 
 const TaskManagement = ({ navigation }: any) => {
   const { colors } = useTheme();
@@ -35,152 +37,8 @@ const TaskManagement = ({ navigation }: any) => {
   // Simulated fetch tasks function
   const fetchTasks = async () => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sample tasks - in a real app, this would come from an API
-      const taskData: ServiceRequest[] = [
-        {
-          id: '1',
-          userId: 'cust1',
-          subscriptionId: 'sub1',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'maintenance',
-          status: 'assigned',
-          description: 'Regular 3-month maintenance for RO purifier',
-          scheduledDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          user: {
-            id: 'cust1',
-            name: 'Rahul Sharma',
-            email: 'rahul.sharma@example.com',
-            role: 'customer',
-            phone: '9876543210',
-            address: '123 Main Street, Apartment 4B',
-            city: 'Mumbai',
-            state: 'Maharashtra',
-            zipCode: '400001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          subscription: {
-            id: 'sub1',
-            userId: 'cust1',
-            productId: 'prod1',
-            status: 'active',
-            startDate: new Date(new Date().getTime() - 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days ago
-            renewalDate: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days later
-            monthlyFee: 499,
-            paymentStatus: 'paid',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            product: {
-              id: 'prod1',
-              name: 'AquaPure RO+UV Water Purifier',
-              description: 'Advanced water purifier with RO+UV technology',
-              price: 15999,
-              rentalPrice: 499,
-              installationCharge: 500,
-              maintenanceFrequency: 90,
-              imageUrl: 'https://example.com/aquapure.jpg',
-              features: ['RO+UV Purification', '7-Stage Filtration', 'Digital Display'],
-              specifications: {
-                capacity: '8 liters',
-                purificationTechnology: 'RO+UV+UF+TDS',
-                dimensions: '40 x 25 x 50 cm',
-                weight: '5 kg',
-              },
-              inStock: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          }
-        },
-        {
-          id: '2',
-          userId: 'cust2',
-          subscriptionId: 'sub2',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'repair',
-          status: 'scheduled',
-          description: 'Water leakage from the bottom of the purifier',
-          scheduledDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days later
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          user: {
-            id: 'cust2',
-            name: 'Priya Patel',
-            email: 'priya.patel@example.com',
-            role: 'customer',
-            phone: '8765432109',
-            address: '456 Park Avenue',
-            city: 'Pune',
-            state: 'Maharashtra',
-            zipCode: '411001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        },
-        {
-          id: '3',
-          userId: 'cust3',
-          subscriptionId: 'sub3',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'installation',
-          status: 'completed',
-          description: 'New RO+UV purifier installation',
-          scheduledDate: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-          completionDate: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          feedback: 'The installation was done perfectly. The technician was very professional.',
-          rating: 5,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          user: {
-            id: 'cust3',
-            name: 'Amit Singh',
-            email: 'amit.singh@example.com',
-            role: 'customer',
-            phone: '7654321098',
-            address: '789 Lake View Road',
-            city: 'Bangalore',
-            state: 'Karnataka',
-            zipCode: '560001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        },
-        {
-          id: '4',
-          userId: 'cust4',
-          subscriptionId: 'sub4',
-          franchiseId: 'fran1',
-          agentId: 'agent1',
-          type: 'maintenance',
-          status: 'pending',
-          description: 'Filter replacement',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          user: {
-            id: 'cust4',
-            name: 'Meera Joshi',
-            email: 'meera.joshi@example.com',
-            role: 'customer',
-            phone: '6543210987',
-            address: '101 Riverside Apartments',
-            city: 'Delhi',
-            state: 'Delhi',
-            zipCode: '110001',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        }
-      ];
-      
-      setTasks(taskData);
+      const response = await agentService.getTasks();
+      setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
       Alert.alert('Error', 'Failed to load tasks. Please try again.');
@@ -228,23 +86,16 @@ const TaskManagement = ({ navigation }: any) => {
     setIsUpdating(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await agentService.updateTaskStatus(selectedTask.id, {
+        status: newStatus,
+        completion_date: new Date().toISOString(),
+        notes: completionNotes
+      });
+      await fetchTasks(); // 🔁 refresh with fresh server data
+
       // In a real app, this would be an API call to update the status
       // For this demo, we'll update the local state
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === selectedTask.id 
-            ? { 
-                ...task, 
-                status: newStatus,
-                completionDate: newStatus === 'completed' ? new Date().toISOString() : task.completionDate,
-                updatedAt: new Date().toISOString()
-              } 
-            : task
-        )
-      );
-      
+
       setModalVisible(false);
       setSelectedTask(null);
       setCompletionNotes('');

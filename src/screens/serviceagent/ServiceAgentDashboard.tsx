@@ -25,140 +25,34 @@ const ServiceAgentDashboard = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
 
   // Simulated fetch dashboard data function
-  const fetchDashboardData = async () => {
-    // This would be replaced with an actual API call
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sample data - in a real app, this would come from an API
-      const data: ServiceAgentDashboardData = {
-        assignedTasks: [
-          {
-            id: '1',
-            userId: 'cust1',
-            subscriptionId: 'sub1',
-            franchiseId: 'fran1',
-            agentId: user?.id,
-            type: 'maintenance',
-            status: 'assigned',
-            description: 'Regular 3-month maintenance for RO purifier',
-            scheduledDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            user: {
-              id: 'cust1',
-              name: 'Rahul Sharma',
-              email: 'rahul.sharma@example.com',
-              role: 'customer',
-              phone: '9876543210',
-              address: '123 Main Street, Apartment 4B',
-              city: 'Mumbai',
-              state: 'Maharashtra',
-              zipCode: '400001',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          },
-          {
-            id: '2',
-            userId: 'cust2',
-            subscriptionId: 'sub2',
-            franchiseId: 'fran1',
-            agentId: user?.id,
-            type: 'repair',
-            status: 'scheduled',
-            description: 'Water leakage from the bottom of the purifier',
-            scheduledDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days later
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            user: {
-              id: 'cust2',
-              name: 'Priya Patel',
-              email: 'priya.patel@example.com',
-              role: 'customer',
-              phone: '8765432109',
-              address: '456 Park Avenue',
-              city: 'Pune',
-              state: 'Maharashtra',
-              zipCode: '411001',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          }
-        ],
-        completedTasks: [
-          {
-            id: '3',
-            userId: 'cust3',
-            subscriptionId: 'sub3',
-            franchiseId: 'fran1',
-            agentId: user?.id,
-            type: 'installation',
-            status: 'completed',
-            description: 'New RO+UV purifier installation',
-            scheduledDate: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-            completionDate: new Date(new Date().getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            user: {
-              id: 'cust3',
-              name: 'Amit Singh',
-              email: 'amit.singh@example.com',
-              role: 'customer',
-              phone: '7654321098',
-              address: '789 Lake View Road',
-              city: 'Bangalore',
-              state: 'Karnataka',
-              zipCode: '560001',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          }
-        ],
-        upcomingSchedule: [
-          {
-            id: '4',
-            userId: 'cust4',
-            subscriptionId: 'sub4',
-            franchiseId: 'fran1',
-            agentId: user?.id,
-            type: 'maintenance',
-            status: 'assigned',
-            description: 'Filter replacement',
-            scheduledDate: new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days later
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            user: {
-              id: 'cust4',
-              name: 'Meera Joshi',
-              email: 'meera.joshi@example.com',
-              role: 'customer',
-              phone: '6543210987',
-              address: '101 Riverside Apartments',
-              city: 'Delhi',
-              state: 'Delhi',
-              zipCode: '110001',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          }
-        ],
-        stats: {
-          pendingTasks: 5,
-          completedTasks: 12,
-          totalCustomers: 8
-        }
-      };
-      
-      setDashboardData(data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  };
+const fetchDashboardData = async () => {
+  try {
+    const response = await agentService.getTasks(); // or axios.get('/agent/tasks')
+    const allTasks = response.data;
+
+    // 💡 Filter based on status
+    const assignedTasks = allTasks.filter(task => task.status === 'assigned');
+    const completedTasks = allTasks.filter(task => task.status === 'completed');
+    const upcomingSchedule = allTasks.filter(task => task.status === 'scheduled');
+
+    setDashboardData({
+      assignedTasks,
+      completedTasks,
+      upcomingSchedule,
+      stats: {
+        pendingTasks: assignedTasks.length,
+        completedTasks: completedTasks.length,
+        totalCustomers: new Set(allTasks.map(task => task.customer_id)).size,
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+  } finally {
+    setIsLoading(false);
+    setRefreshing(false);
+  }
+};
+
 
   // Fetch data when screen comes into focus
   useFocusEffect(

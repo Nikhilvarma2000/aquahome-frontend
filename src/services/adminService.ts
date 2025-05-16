@@ -99,4 +99,34 @@ async getSubscriptionsByCustomer(customerId: string): Promise<any[]> {
   }
 },
 
+async getServiceRequests(): Promise<ServiceRequest[]> {
+  try {
+    const response = await api.get("/services");
+    return response.data;
+  } catch (error) {
+    console.error("Get service requests error:", error);
+    throw error;
+  }
+},
+
+async updateServiceRequest(id: number, data: any): Promise<ServiceRequest> {
+  try {
+    const response = await api.put(`/services/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Update service request error:", error);
+    throw error;
+  }
+},
+
+async getServiceRequestById(id: number): Promise<ServiceRequest> {
+  try {
+    const response = await api.get(`/services/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Get service request by ID error:", error);
+    throw error;
+  }
+},
+
 };
