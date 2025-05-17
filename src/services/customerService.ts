@@ -47,7 +47,7 @@ export const customerService = {
     }
   },
 
-  async getOrderById(orderId: string): Promise<Order> {
+  async getOrderById(orderId: number): Promise<Order> {
     try {
       const response = await api.get(`/orders/${orderId}`);
       return response.data;
@@ -57,7 +57,14 @@ export const customerService = {
     }
   },
 
-  async placeOrder(orderData: Partial<Order>): Promise<Order> {
+  async placeOrder(orderData: {
+    product_id: number;
+    franchise_id: number;
+    shipping_address: string;
+    billing_address: string;
+    rental_duration: number;
+    notes: string;
+  }): Promise<Order> {
     try {
       const response = await api.post("/orders", orderData);
       return response.data;
@@ -67,10 +74,14 @@ export const customerService = {
     }
   },
 
-  async cancelOrder(orderId: string): Promise<{ message: string }> {
-    // Not implemented in backend. Placeholder.
-    console.warn("Cancel order not implemented on backend");
-    return { message: "Cancel order not implemented" };
+  async cancelOrder(orderId: number): Promise<{ message: string }> {
+    try {
+      const response = await api.post(`/orders/${orderId}/cancel`);
+      return response.data;
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      throw error;
+    }
   },
 
   async getSubscriptions(): Promise<Subscription[]> {
@@ -219,13 +230,17 @@ export const customerService = {
 
   // Generate Initial Payment Razorpay Order
   async generateInitialPaymentOrder(orderId: number) {
-    const response = await api.post("/payments/generate-order", { order_id: orderId });
+    const response = await api.post("/payments/generate-order", {
+      order_id: orderId,
+    });
     return response.data;
   },
 
   //  Generate Monthly Subscription Razorpay Order
   async generateMonthlyPayment(subscriptionId: number) {
-    const response = await api.post("/payments/generate-monthly", { subscription_id: subscriptionId });
+    const response = await api.post("/payments/generate-monthly", {
+      subscription_id: subscriptionId,
+    });
     return response.data;
   },
 
@@ -252,5 +267,4 @@ export const customerService = {
     const response = await api.get(`/payments/${id}`);
     return response.data;
   },
-
 };

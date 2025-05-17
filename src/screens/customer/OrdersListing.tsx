@@ -33,7 +33,6 @@ const OrdersLiting = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedMonthlyRent, setEditedMonthlyRent] = useState("");
@@ -70,7 +69,18 @@ const OrdersLiting = () => {
   };
 
   const handleViewOrder = (order: Order) => {
-    navigation.navigate("OrderDetails", { orderId: order.id });
+    navigation.navigate("OrderDetails", { order: order });
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    try {
+      customerService.cancelOrder(order.id);
+      order.status = "cancelled";
+      onRefresh();
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      throw error;
+    }
   };
 
   // const handleToggleStatus = async (order: Order) => {
@@ -88,7 +98,7 @@ const OrdersLiting = () => {
       case "delivered":
         return [...orders].filter((order) => order.status === "delivered");
       case "pending":
-        return [...orders].filter((order) => order.status !== "delivered");
+        return [...orders].filter((order) => order.status === "pending");
       case "cancelled":
         return [...orders].filter((order) => order.status === "cancelled");
       default:
@@ -107,7 +117,7 @@ const OrdersLiting = () => {
       <Text
         style={[
           styles.filterText,
-          { color: selectedFilter === value ? colors.primary : colors.text },
+          { color: selectedFilter === value ? colors.background : colors.text },
         ]}
       >
         {" "}
@@ -127,7 +137,7 @@ const OrdersLiting = () => {
       >
         <View style={styles.filterOptions}>
           {renderFilterOption("all", "All")}
-          {renderFilterOption("delivired", "Delivered")}
+          {renderFilterOption("delivered", "Delivered")}
           {renderFilterOption("pending", "Pending")}
           {renderFilterOption("cancelled", "Cancelled")}
         </View>
@@ -138,8 +148,8 @@ const OrdersLiting = () => {
         renderItem={({ item }) => (
           <OrderCard
             order={item}
-            onPress={() => handleViewOrder(item)}
-            onToggleStatus={() => alert("Toggle Status")}
+            onViewDetails={() => handleViewOrder(item)}
+            onCancel={() => handleCancelOrder(item)}
           />
         )}
         keyExtractor={(item, index) => {

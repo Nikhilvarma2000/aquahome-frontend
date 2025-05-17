@@ -26,44 +26,41 @@ const CustomerDashboard = () => {
   const { colors } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation<any>();
-
-  const [dashboardData, setDashboardData] =
-    useState<CustomerDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const data = await customerService.getDashboardData();
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-      Alert.alert("Error", "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchDashboardData = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const data = await customerService.getDashboardData();
+  //     setDashboardData(data);
+  //   } catch (error) {
+  //     console.error("Error fetching dashboard data:", error);
+  //     Alert.alert("Error", "Failed to load dashboard data");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchDashboardData();
-    setRefreshing(false);
-  };
+  // const onRefresh = async () => {
+  //   setRefreshing(true);
+  //   // await fetchDashboardData();
+  //   setRefreshing(false);
+  // };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  // useEffect(() => {
+  //   // fetchDashboardData();
+  // }, []);
 
-  if (loading) {
-    return <Loading />;
-  }
+  // if (loading) {
+  //   return <Loading />;
+  // }
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={refreshing} /** onRefresh={onRefresh} */ />
       }
     >
       {/* Welcome Section */}
