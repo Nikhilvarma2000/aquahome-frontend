@@ -273,6 +273,14 @@ const CustomerDashboard = () => {
       </View> */}
       <View style={styles.quickActions}>
         <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.success }]}
+          onPress={() => navigation.navigate("ServiceRequest" as never)}
+        >
+          <Feather name="plus-circle" size={20} color="#fff" />
+          <Text style={styles.actionButtonText}>Add Service Request</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate("OrdersListing" as never)}
         >
@@ -281,16 +289,8 @@ const CustomerDashboard = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.success }]}
-          onPress={() => navigation.navigate("FranchiseDashboard" as never)}
-        >
-          <Feather name="home" size={20} color="#fff" />
-          <Text style={styles.actionButtonText}>Manage Service Requests</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.warning }]}
-          onPress={() => navigation.navigate("AdminSubscriptions" as never)}
+          onPress={() => navigation.navigate("SubscriptionManagement" as never)}
         >
           <Feather name="repeat" size={20} color="#fff" />
           <Text style={styles.actionButtonText}>Manage Subscriptions</Text>

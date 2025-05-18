@@ -17,21 +17,23 @@ import { useNavigation } from "@react-navigation/native";
 import ProductCard from "../../components/ProductCard";
 import Loading from "../../components/ui/Loading";
 import { productService } from "../../services/productService";
-import { Product } from "../../types";
+import { Order, Product, ServiceRequest } from "../../types";
 import { Feather } from "@expo/vector-icons";
+import { customerService } from "@/services/customerService";
+import OrderCard from "@/components/OrderCard";
+import RequestCard from "@/components/RequestCard";
 
-const ProductListing = () => {
+const RequestsListing = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedMonthlyRent, setEditedMonthlyRent] = useState("");
@@ -44,19 +46,11 @@ const ProductListing = () => {
   const [newSecurityDeposit, setNewSecurityDeposit] = useState("");
   const [newInstallationFee, setNewInstallationFee] = useState("");
 
-  const fetchProducts = async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
-      const data = await productService.getProducts();
-      console.log("Fetched Products (raw):", data);
-
-      // 👇 Normalize field names like `inStock` -> `inStock`
-      const normalized = data.map((p) => ({
-        ...p,
-        inStock: p.inStock ?? p.inStock, // ✅ Fix here
-      }));
-
-      setProducts(normalized);
+      const requests = await customerService.getServiceRequests();
+      setRequests(requests);
     } catch (error) {
       Alert.alert("Error", "Failed to load products");
       console.error(error);
@@ -67,111 +61,51 @@ const ProductListing = () => {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchRequests();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchProducts();
+    fetchRequests();
   };
 
-  const handlePlaceOrder = (product: Product) => {
-    if (!product.inStock) {
-      Alert.alert(
-        "Not Available",
-        "This product is currently inactive and cannot be ordered."
-      );
-      return;
-    }
-    navigation.navigate("OrderPlacement", { productId: product.id });
+  const handleViewOrder = (request: ServiceRequest) => {
+    navigation.navigate("RequestDetails", { request: request });
   };
 
-  const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setEditedName(product.name);
-    setEditedDescription(product.description);
-    setEditedMonthlyRent(product.rentalPrice?.toString() || "");
-    // setEditedSecurityDeposit(product.installationCharge?.toString() || "");
-    setEditedInstallationFee(product.installationCharge?.toString() || "");
-    setEditModalVisible(true);
-  };
-
-  const handleCreateProduct = async () => {
+  const handleCancelRequest = (request: ServiceRequest) => {
     try {
-      const newProduct = {
-        name: newName,
-        description: newDescription,
-        monthlyRent: parseFloat(newMonthlyRent),
-        securityDeposit: parseFloat(newSecurityDeposit),
-        installationFee: parseFloat(newInstallationFee),
-        inStock: true,
-      };
-      await productService.addProduct(newProduct);
-      setAddModalVisible(false);
-      fetchProducts();
-      setNewName("");
-      setNewDescription("");
-      setNewMonthlyRent("");
-      setNewSecurityDeposit("");
-      setNewInstallationFee("");
+      customerService.cancelServiceRequest(request.id);
+      request.status = "cancelled";
+      onRefresh();
     } catch (error) {
-      Alert.alert("Error", "Failed to add product.");
+      console.error("Cancel order error:", error);
+      throw error;
     }
   };
 
-  const handleDeleteProduct = async (productId: number) => {
-    try {
-      await productService.deleteProduct(productId);
-      Alert.alert("Deleted", "Product has been deleted.");
-      fetchProducts();
-    } catch (error) {
-      Alert.alert("Error", "Failed to delete product.");
-    }
-  };
+  // const handleToggleStatus = async (order: Order) => {
+  //   try {
+  //     const updated = { ...order };
+  //     await productService.toggleProductStatus(order.id);
+  //     fetchOrders();
+  //   } catch (error) {
+  //     Alert.alert("Error", "Failed to toggle product status.");
+  //   }
+  // };
 
-  const handleToggleStatus = async (product: Product) => {
-    try {
-      const updated = { ...product, inStock: !product.inStock };
-      await productService.toggleProductStatus(product.id, !product.inStock);
-      fetchProducts();
-    } catch (error) {
-      Alert.alert("Error", "Failed to toggle product status.");
-    }
-  };
-
-  const handleUpdateProduct = async () => {
-    if (!selectedProduct) return;
-    try {
-      const updated = {
-        ...selectedProduct,
-        name: editedName,
-        description: editedDescription,
-        monthlyRent: parseFloat(editedMonthlyRent),
-        securityDeposit: parseFloat(editedSecurityDeposit),
-        installationFee: parseFloat(editedInstallationFee),
-      };
-      await productService.updateProduct(selectedProduct.id, updated);
-      setEditModalVisible(false);
-      fetchProducts();
-    } catch (error) {
-      Alert.alert("Error", "Failed to update product.");
-    }
-  };
-
-  const handleAddProduct = () => {
-    setAddModalVisible(true);
-  };
-
-  const filteredProducts = () => {
+  const filteredOrders = () => {
     switch (selectedFilter) {
-      case "lowPrice":
-        return [...products].sort((a, b) => a.rentalPrice - b.rentalPrice);
-      case "highPrice":
-        return [...products].sort((a, b) => b.rentalPrice - a.rentalPrice);
-      case "popular":
-        return products;
+      case "completed":
+        return [...requests].filter(
+          (request) => request.status === "completed"
+        );
+      case "pending":
+        return [...requests].filter((order) => order.status === "pending");
+      case "cancelled":
+        return [...requests].filter((order) => order.status === "cancelled");
       default:
-        return products;
+        return requests;
     }
   };
 
@@ -186,7 +120,7 @@ const ProductListing = () => {
       <Text
         style={[
           styles.filterText,
-          { color: selectedFilter === value ? colors.primary : colors.text },
+          { color: selectedFilter === value ? colors.background : colors.text },
         ]}
       >
         {" "}
@@ -201,55 +135,24 @@ const ProductListing = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.headerContainer}>
-        <View>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            Water Purifiers
-          </Text>
-          <Text
-            style={[styles.headerSubtitle, { color: colors.textSecondary }]}
-          >
-            Choose the best purifier for your home
-          </Text>
-        </View>
-        {isAdmin && (
-          <TouchableOpacity style={styles.addButton} onPress={handleAddProduct}>
-            <Feather name="plus-circle" size={24} color={colors.primary} />
-            <Text
-              style={{
-                color: colors.primary,
-                marginLeft: 6,
-                fontWeight: "600",
-              }}
-            >
-              Add Product
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
       <View
         style={[styles.filtersContainer, { borderBottomColor: colors.border }]}
       >
         <View style={styles.filterOptions}>
           {renderFilterOption("all", "All")}
-          {renderFilterOption("lowPrice", "Low Price")}
-          {renderFilterOption("highPrice", "High Price")}
-          {renderFilterOption("popular", "Popular")}
+          {renderFilterOption("completed", "Completed")}
+          {renderFilterOption("pending", "Pending")}
+          {renderFilterOption("cancelled", "Cancelled")}
         </View>
       </View>
 
       <FlatList
-        data={filteredProducts()}
+        data={filteredOrders()}
         renderItem={({ item }) => (
-          <ProductCard
-            product={item}
-            onPress={() => handlePlaceOrder(item)}
-            onEdit={isAdmin ? () => handleEditProduct(item) : undefined}
-            onDelete={isAdmin ? () => handleDeleteProduct(item.id) : undefined}
-            onToggleStatus={
-              isAdmin ? () => handleToggleStatus(item) : undefined
-            }
+          <RequestCard
+            request={item}
+            onViewDetails={() => handleViewOrder(item)}
+            onCancel={() => handleCancelRequest(item)}
           />
         )}
         keyExtractor={(item, index) => {
@@ -268,7 +171,7 @@ const ProductListing = () => {
           <View style={styles.emptyContainer}>
             <Feather name="info" size={50} color={colors.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No products available
+              No Orders available
             </Text>
           </View>
         }
@@ -342,12 +245,12 @@ const ProductListing = () => {
               >
                 <Text style={{ color: colors.error }}>Cancel</Text>
               </Pressable>
-              <Pressable
+              {/* <Pressable
                 onPress={handleUpdateProduct}
                 style={styles.modalButton}
               >
                 <Text style={{ color: colors.primary }}>Update</Text>
-              </Pressable>
+              </Pressable> */}
             </View>
           </View>
         </View>
@@ -421,12 +324,12 @@ const ProductListing = () => {
               >
                 <Text style={{ color: colors.error }}>Cancel</Text>
               </Pressable>
-              <Pressable
+              {/* <Pressable
                 onPress={handleCreateProduct}
                 style={styles.modalButton}
               >
                 <Text style={{ color: colors.primary }}>Add</Text>
-              </Pressable>
+              </Pressable> */}
             </View>
           </View>
         </View>
@@ -522,4 +425,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProductListing;
+export default RequestsListing;

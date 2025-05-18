@@ -2,7 +2,7 @@ import { Product } from "@/types";
 import api from "./api";
 
 export const productService = {
-async getProducts(): Promise<Product[]> {
+  async getProducts(): Promise<Product[]> {
     try {
       const response = await api.get("products");
       return response.data;
@@ -22,7 +22,10 @@ async getProducts(): Promise<Product[]> {
     }
   },
 
-  async updateProduct(id: number | undefined, product: Partial<Product>): Promise<Product> {
+  async updateProduct(
+    id: number | undefined,
+    product: Partial<Product>
+  ): Promise<Product> {
     if (!id) {
       throw new Error("Product ID is undefined");
     }
@@ -47,18 +50,18 @@ async getProducts(): Promise<Product[]> {
     }
   },
 
-  async toggleProductStatus(id: number | undefined, isActive: boolean): Promise<Product> {
-  if (!id) {
-    throw new Error("Product ID is undefined");
-  }
-  try {
-    const response = await api.patch(`admin/products/${id}/toggle-status`, {
-      isActive, // ✅ send the updated status in body!
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Toggle product status error:", error);
-    throw error;
-  }
-},
+  async toggleProductStatus(id: number, isActive: boolean): Promise<Product> {
+    if (!id) {
+      throw new Error("Product ID is undefined");
+    }
+    try {
+      const response = await api.patch(`admin/products/${id}/toggle-status`, {
+        isActive, // ✅ send the updated status in body!
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Toggle product status error:", error);
+      throw error;
+    }
+  },
 };

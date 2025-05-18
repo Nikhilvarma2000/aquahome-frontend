@@ -105,7 +105,7 @@ export const customerService = {
   },
 
   async cancelSubscription(
-    subscriptionId: string
+    subscriptionId: number
   ): Promise<{ message: string }> {
     try {
       const response = await api.post(
@@ -119,7 +119,7 @@ export const customerService = {
   },
 
   async pauseSubscription(
-    subscriptionId: string,
+    subscriptionId: number,
     resumeDate?: string
   ): Promise<Subscription> {
     try {
@@ -134,7 +134,7 @@ export const customerService = {
     }
   },
 
-  async resumeSubscription(subscriptionId: string): Promise<Subscription> {
+  async resumeSubscription(subscriptionId: number): Promise<Subscription> {
     try {
       const response = await api.post(
         `/customer/subscriptions/${subscriptionId}/resume`
@@ -186,7 +186,7 @@ export const customerService = {
   },
 
   async cancelServiceRequest(
-    serviceRequestId: string
+    serviceRequestId: number
   ): Promise<{ message: string }> {
     try {
       const response = await api.post(

@@ -1,32 +1,33 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
-  ActivityIndicator, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
   RefreshControl,
   Alert,
   Modal,
-  TextInput
-} from 'react-native';
-import { useTheme } from '../../hooks/useTheme';
-import { Feather } from '@expo/vector-icons';
-import { customerService } from '../../services/customerService';
-import { Subscription } from '../../types';
-import { useFocusEffect } from '@react-navigation/native';
-import Button from '../../components/ui/Button';
-import SubscriptionCard from '../../components/SubscriptionCard';
+  TextInput,
+} from "react-native";
+import { useTheme } from "../../hooks/useTheme";
+import { Feather } from "@expo/vector-icons";
+import { customerService } from "../../services/customerService";
+import { Subscription } from "../../types";
+import { useFocusEffect } from "@react-navigation/native";
+import Button from "../../components/ui/Button";
+import SubscriptionCard from "../../components/SubscriptionCard";
 
 const SubscriptionManagement = ({ navigation }: any) => {
   const { colors } = useTheme();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [selectedSubscription, setSelectedSubscription] =
+    useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pauseModalVisible, setPauseModalVisible] = useState(false);
-  const [resumeDate, setResumeDate] = useState('');
+  const [resumeDate, setResumeDate] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchSubscriptions = async () => {
@@ -35,8 +36,8 @@ const SubscriptionManagement = ({ navigation }: any) => {
       const data = await customerService.getSubscriptions();
       setSubscriptions(data);
     } catch (error) {
-      console.error('Error fetching subscriptions:', error);
-      Alert.alert('Error', 'Failed to load subscriptions. Please try again.');
+      console.error("Error fetching subscriptions:", error);
+      Alert.alert("Error", "Failed to load subscriptions. Please try again.");
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -69,11 +70,11 @@ const SubscriptionManagement = ({ navigation }: any) => {
     setActionLoading(true);
     try {
       await customerService.resumeSubscription(subscription.id);
-      Alert.alert('Success', 'Your subscription has been resumed.');
+      Alert.alert("Success", "Your subscription has been resumed.");
       fetchSubscriptions();
     } catch (error) {
-      console.error('Error resuming subscription:', error);
-      Alert.alert('Error', 'Failed to resume subscription. Please try again.');
+      console.error("Error resuming subscription:", error);
+      Alert.alert("Error", "Failed to resume subscription. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -81,17 +82,20 @@ const SubscriptionManagement = ({ navigation }: any) => {
 
   const confirmPauseSubscription = async () => {
     if (!selectedSubscription) return;
-    
+
     setActionLoading(true);
     try {
-      await customerService.pauseSubscription(selectedSubscription.id, resumeDate || undefined);
-      Alert.alert('Success', 'Your subscription has been paused.');
+      await customerService.pauseSubscription(
+        selectedSubscription.id,
+        resumeDate || undefined
+      );
+      Alert.alert("Success", "Your subscription has been paused.");
       setPauseModalVisible(false);
-      setResumeDate('');
+      setResumeDate("");
       fetchSubscriptions();
     } catch (error) {
-      console.error('Error pausing subscription:', error);
-      Alert.alert('Error', 'Failed to pause subscription. Please try again.');
+      console.error("Error pausing subscription:", error);
+      Alert.alert("Error", "Failed to pause subscription. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -99,43 +103,53 @@ const SubscriptionManagement = ({ navigation }: any) => {
 
   const handleCancelSubscription = (subscription: Subscription) => {
     Alert.alert(
-      'Cancel Subscription',
-      'Are you sure you want to cancel this subscription? This action cannot be undone.',
+      "Cancel Subscription",
+      "Are you sure you want to cancel this subscription? This action cannot be undone.",
       [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
-          style: 'destructive',
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes, Cancel",
+          style: "destructive",
           onPress: async () => {
             setActionLoading(true);
             try {
               await customerService.cancelSubscription(subscription.id);
-              Alert.alert('Success', 'Your subscription has been cancelled.');
+              Alert.alert("Success", "Your subscription has been cancelled.");
               fetchSubscriptions();
             } catch (error) {
-              console.error('Error cancelling subscription:', error);
-              Alert.alert('Error', 'Failed to cancel subscription. Please try again.');
+              console.error("Error cancelling subscription:", error);
+              Alert.alert(
+                "Error",
+                "Failed to cancel subscription. Please try again."
+              );
             } finally {
               setActionLoading(false);
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   const renderItem = ({ item }: { item: Subscription }) => (
-    <SubscriptionCard 
-      subscription={item} 
+    <SubscriptionCard
+      subscription={item}
       onPress={() => handleViewSubscription(item)}
     />
   );
 
   if (isLoading && !refreshing) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.text }]}>Loading subscriptions...</Text>
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Loading subscriptions...
+        </Text>
       </View>
     );
   }
@@ -145,13 +159,16 @@ const SubscriptionManagement = ({ navigation }: any) => {
       {subscriptions.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Feather name="package" size={64} color={colors.textSecondary} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Active Subscriptions</Text>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>
+            No Active Subscriptions
+          </Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-            You don't have any active subscriptions. Browse our products to start a subscription.
+            You don't have any active subscriptions. Browse our products to
+            start a subscription.
           </Text>
           <Button
             title="Browse Products"
-            onPress={() => navigation.navigate('ProductListing')}
+            onPress={() => navigation.navigate("ProductListing")}
             style={styles.browseButton}
           />
         </View>
@@ -159,7 +176,7 @@ const SubscriptionManagement = ({ navigation }: any) => {
         <FlatList
           data={subscriptions}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl
@@ -171,8 +188,12 @@ const SubscriptionManagement = ({ navigation }: any) => {
           }
           ListHeaderComponent={
             <View style={styles.header}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Your Subscriptions</Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                Your Subscriptions
+              </Text>
+              <Text
+                style={[styles.headerSubtitle, { color: colors.textSecondary }]}
+              >
                 Manage all your water purifier subscriptions
               </Text>
             </View>
@@ -188,39 +209,50 @@ const SubscriptionManagement = ({ navigation }: any) => {
         onRequestClose={() => setPauseModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Pause Subscription</Text>
-            
-            <Text style={[styles.modalText, { color: colors.textSecondary }]}>
-              You can pause your subscription temporarily. You won't be billed during the pause period.
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colors.background },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Pause Subscription
             </Text>
-            
-            <Text style={[styles.inputLabel, { color: colors.text }]}>Resume Date (Optional)</Text>
+
+            <Text style={[styles.modalText, { color: colors.textSecondary }]}>
+              You can pause your subscription temporarily. You won't be billed
+              during the pause period.
+            </Text>
+
+            <Text style={[styles.inputLabel, { color: colors.text }]}>
+              Resume Date (Optional)
+            </Text>
             <TextInput
               style={[
                 styles.dateInput,
-                { 
+                {
                   backgroundColor: colors.card,
                   color: colors.text,
-                  borderColor: colors.border
-                }
+                  borderColor: colors.border,
+                },
               ]}
               value={resumeDate}
               onChangeText={setResumeDate}
               placeholder="YYYY-MM-DD (Optional)"
               placeholderTextColor={colors.textSecondary}
             />
-            
+
             <Text style={[styles.noteText, { color: colors.textSecondary }]}>
-              If no date is specified, your subscription will remain paused until you manually resume it.
+              If no date is specified, your subscription will remain paused
+              until you manually resume it.
             </Text>
-            
+
             <View style={styles.modalButtons}>
               <Button
                 title="Cancel"
                 onPress={() => {
                   setPauseModalVisible(false);
-                  setResumeDate('');
+                  setResumeDate("");
                 }}
                 variant="outline"
                 style={{ flex: 1, marginRight: 8 }}
@@ -246,8 +278,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 16,
@@ -259,7 +291,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   headerSubtitle: {
@@ -270,19 +302,19 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     paddingHorizontal: 32,
     marginBottom: 24,
   },
@@ -291,20 +323,20 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
     padding: 24,
   },
   modalContent: {
     borderRadius: 12,
     padding: 24,
-    width: '100%',
+    width: "100%",
     maxWidth: 500,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
   },
   modalText: {
@@ -314,7 +346,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   dateInput: {
     borderWidth: 1,
@@ -326,10 +358,10 @@ const styles = StyleSheet.create({
   noteText: {
     fontSize: 12,
     marginBottom: 16,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   modalButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
 });
 

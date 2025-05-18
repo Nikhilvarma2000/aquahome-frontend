@@ -37,7 +37,7 @@ export interface RegisterParams {
 
 // Product related types
 export interface Product {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;

@@ -1,7 +1,7 @@
-import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authService } from '../services/authService';
-import { User, LoginParams, RegisterParams, AuthResponse } from '../types';
+import React, { createContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authService } from "../services/authService";
+import { User, LoginParams, RegisterParams, AuthResponse } from "../types";
 
 interface AuthContextType {
   user: User | null;
@@ -25,7 +25,9 @@ export const AuthContext = createContext<AuthContextType>({
   updateUserProfile: async () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,8 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const loadStoredAuth = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('token');
-        if (storedToken) {
+        const storedToken = await AsyncStorage.getItem("token");
+        if (storedToken !== null) {
           // Validate token and get user data
           try {
             const userData = await authService.getCurrentUser(storedToken);
@@ -43,12 +45,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setToken(storedToken);
           } catch (error) {
             // Token is invalid or expired
-            console.error('Failed to validate stored token:', error);
-            await AsyncStorage.removeItem('token');
+            console.error("Failed to validate stored token:", error);
+            await AsyncStorage.removeItem("token");
           }
         }
       } catch (error) {
-        console.error('Error loading stored authentication:', error);
+        console.error("Error loading stored authentication:", error);
       } finally {
         setIsLoading(false);
       }
@@ -61,11 +63,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response: AuthResponse = await authService.login(credentials);
-      await AsyncStorage.setItem('token', response.token);
+      await AsyncStorage.setItem("token", response.token);
       setUser(response.user);
       setToken(response.token);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -76,11 +78,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response: AuthResponse = await authService.register(userData);
-      await AsyncStorage.setItem('token', response.token);
+      await AsyncStorage.setItem("token", response.token);
       setUser(response.user);
       setToken(response.token);
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -90,11 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setIsLoading(true);
     try {
-      await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem("token");
       setUser(null);
       setToken(null);
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -102,13 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = async (userData: Partial<User>) => {
     if (!token || !user) return;
-    
+
     setIsLoading(true);
     try {
       const updatedUser = await authService.updateProfile(userData, token);
       setUser(updatedUser);
     } catch (error) {
-      console.error('Profile update failed:', error);
+      console.error("Profile update failed:", error);
       throw error;
     } finally {
       setIsLoading(false);

@@ -28,7 +28,7 @@ import ProductListing from "../screens/customer/ProductListing";
 import OrderPlacement from "../screens/customer/OrderPlacement";
 import SubscriptionManagement from "../screens/customer/SubscriptionManagement";
 import ServiceRequest from "../screens/customer/ServiceRequest";
-import OrderDetailsScreen from "../screens/customer/OrderDetailsScreen";
+import OrderDetailsScreen from "@/screens/customer/OrderDetailsScreen";
 import SubscriptionDetails from "../screens/customer/SubscriptionDetails";
 import OrdersLiting from "@/screens/customer/OrdersListing";
 
@@ -42,6 +42,8 @@ import ProfileScreen from "../screens/common/ProfileScreen";
 import NotificationsScreen from "../screens/common/NotificationsScreen";
 import { franchiseService } from "@/services/franchiseService";
 import { Franchise } from "@/types";
+import RequestsListing from "@/screens/customer/RequestsListing";
+import RequestDetailsScreen from "@/screens/customer/RequestDetailsScreen";
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -197,12 +199,12 @@ const CustomerTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="SubscriptionManagement"
-        component={SubscriptionManagement as any}
+        name="RequestsListing"
+        component={RequestsListing as any}
         options={{
-          title: "Subscriptions",
+          title: "Requests",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="calendar" size={size} color={color} />
+            <Feather name="tool" size={size} color={color} />
           ),
         }}
       />
@@ -315,16 +317,30 @@ const CustomerStackNavigator = () => {
         component={NotificationsScreen}
         options={{ title: "Notifications" }}
       />
-      <Stack.Screen name="ProductListing" component={ProductListing} />
+      <Stack.Screen
+        name="ProductListing"
+        component={ProductListing}
+        options={{ title: "product Listing" }}
+      />
       <Stack.Screen
         name="OrderDetails"
         component={OrderDetailsScreen}
         options={{ title: "Order Details" }}
       />
       <Stack.Screen
+        name="RequestDetails"
+        component={RequestDetailsScreen}
+        options={{ title: "request Details" }}
+      />
+      <Stack.Screen
         name="SubscriptionDetails"
         component={SubscriptionDetails}
         options={{ title: "Subscription Details" }}
+      />
+      <Stack.Screen
+        name="SubscriptionManagement"
+        component={SubscriptionManagement}
+        options={{ title: "Subscription Management" }}
       />
     </Stack.Navigator>
   );
