@@ -1,0 +1,741 @@
+ import React, { useState, useEffect } from 'react';
+  import { adminService } from '../../services/adminService';
+  import { franchiseService } from '../../services/franchiseService';
+  import api from '../../services/api';
+
+  import {
+    View,
+    Text,
+    StyleSheet,
+    FlatList,
+    TouchableOpacity,
+    Alert,
+    Modal,
+    TextInput,
+    ScrollView,
+  } from 'react-native';
+  import { useTheme } from '../../hooks/useTheme';
+  import { useNavigation } from '@react-navigation/native';
+  import { Feather } from '@expo/vector-icons';
+  import { Order, User } from '../../types';
+  import Card from '../../components/ui/Card';
+  import Button from '../../components/ui/Button';
+  import Loading from '../../components/ui/Loading';
+  import OrderItem from '../../components/OrderItem';
+
+
+  // This would be replaced with a real service in production
+
+    const OrderManagement = () => {
+    const { colors } = useTheme();
+    const navigation = useNavigation<any>();
+
+    const [loading, setLoading] = useState(true);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+    const [selectedFilter, setSelectedFilter] = useState('all');
+
+    // Selected order for actions
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [assignModalVisible, setAssignModalVisible] = useState(false);
+    const [statusModalVisible, setStatusModalVisible] = useState(false);
+    const [franchises, setFranchises] = useState<User[]>([]);
+    const [selectedFranchiseId, setSelectedFranchiseId] = useState<string>('');
+    const [agentModalVisible, setAgentModalVisible] = useState(false);
+    const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+    const [agents, setAgents] = useState<User[]>([]);
+    const [selectedStatus, setSelectedStatus] = useState<string>('');
+
+    useEffect(() => {
+      fetchOrders();
+      fetchFranchises();
+      fetchAgents(); // New line added here
+    }, []);
+
+
+    useEffect(() => {
+      applyFilters();
+    }, [selectedFilter, orders]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+
+      const rawData = await adminService.getAllOrders();
+
+      if (!Array.isArray(rawData)) {
+        console.error('🚨 rawData is not an array:', rawData);
+        setOrders([]);
+        setFilteredOrders([]);
+        return;
+      }
+
+      const data = rawData.map((item, index) => {
+        const order = item.order || item;
+        const orderId = order.id || order.ID || item.ID || `temp-${index}`; // avoid undefined
+
+        return {
+          id: orderId,
+          ...order,
+          product: item.product || order.product || {},
+          customer: item.customer || order.customer || {},
+          franchise: item.franchise || order.franchise || {},
+
+          // ✅ Fix for total amount
+          totalAmount: order.total_initial_amount ?? 0,
+        };
+      });
+
+
+
+
+      setOrders(data);
+      setFilteredOrders(data);
+    } catch (error) {
+      console.error('❌ Error fetching orders:', error);
+      Alert.alert('Error', 'Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFranchises = async () => {
+    try {
+       const data = await franchiseService.getAllFranchises();
+      setFranchises(data);
+    } catch (error) {
+      console.error('Error fetching franchises:', error);
+    }
+  };
+
+  const fetchAgents = async () => {
+    try {
+      const response = await api.get("/admin/users/role/service_agent");
+
+      const normalized = response.data.map((agent: any) => ({
+        ...agent,
+        id: agent.id || agent.ID, // ✅ fallback to agent.ID
+      }));
+
+      setAgents(normalized);
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+    }
+  };
+
+
+
+  const applyFilters = () => {
+    if (selectedFilter === 'all') {
+      setFilteredOrders(orders);
+      return;
+    }
+
+    const filtered = orders.filter(order => order.status === selectedFilter);
+    setFilteredOrders(filtered);
+  };
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+  };
+
+  const handleShowAssignModal = (order: Order) => {
+    setSelectedOrder(order);
+    setSelectedFranchiseId('');
+    setAssignModalVisible(true);
+  };
+
+  const handleShowStatusModal = (order: Order) => {
+    setSelectedOrder(order);
+    setSelectedStatus(order.status);
+    setStatusModalVisible(true);
+  };
+
+  const handleAssignOrder = async () => {
+    if (!selectedOrder || !selectedFranchiseId) {
+      Alert.alert('Error', 'Please select a franchise');
+      return;
+    }
+
+    try {
+      await adminService.assignOrder(selectedOrder.id, selectedFranchiseId);
+
+      // Update local state
+      const updatedOrders = orders.map(order => {
+        if (order.id === selectedOrder.id) {
+          return { ...order, franchiseId: selectedFranchiseId };
+        }
+        return order;
+      });
+
+      setOrders(updatedOrders);
+      applyFilters();
+
+      Alert.alert('Success', 'Order assigned successfully');
+      setAssignModalVisible(false);
+    } catch (error) {
+      console.error('Error assigning order:', error);
+      Alert.alert('Error', 'Failed to assign order');
+    }
+  };
+
+  const handleAssignAgent = async () => {
+    if (!selectedOrder || !selectedAgentId) {
+      Alert.alert('Error', 'Please select a service agent');
+      return;
+    }
+
+    try {
+      await adminService.assignOrderToAgent(selectedOrder.id, Number(selectedAgentId));
+
+      const updatedOrders = orders.map(order => {
+        if (order.id === selectedOrder.id) {
+          return { ...order, serviceAgentId: Number(selectedAgentId) };
+        }
+        return order;
+      });
+
+      setOrders(updatedOrders);
+      applyFilters();
+      Alert.alert('Success', 'Service agent assigned successfully');
+      setAgentModalVisible(false);
+    } catch (error) {
+      console.error('Error assigning service agent:', error);
+      Alert.alert('Error', 'Failed to assign service agent');
+    }
+  };
+
+
+  const handleUpdateStatus = async () => {
+    if (!selectedOrder || !selectedStatus) {
+      Alert.alert('Error', 'Please select a status');
+      return;
+    }
+
+    try {
+      await adminService.updateOrderStatus(selectedOrder.id, selectedStatus);
+
+
+      // Update local state
+      const updatedOrders = orders.map(order => {
+        if (order.id === selectedOrder.id) {
+          return { ...order, status: selectedStatus };
+        }
+        return order;
+      });
+
+      setOrders(updatedOrders as any);
+      applyFilters();
+
+      Alert.alert('Success', 'Order status updated successfully');
+      setStatusModalVisible(false);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      Alert.alert('Error', 'Failed to update order status');
+    }
+  };
+
+  const renderOrderItem = ({ item }: { item: Order }) => {
+  console.log("🧪 FlatList item:", item);
+
+    return (
+      <Card>
+        <OrderItem
+          order={item}
+          onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
+
+        />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+          <Button
+            title="Assign Agent"
+            onPress={() => {
+              setSelectedOrder(item);
+              setAgentModalVisible(true);
+            }}
+          />
+
+
+          <Button
+            title="Update Status"
+            onPress={() => {
+              setSelectedOrder(item);
+              setStatusModalVisible(true);
+            }}
+            style={{ flex: 1 }}
+          />
+        </View>
+      </Card>
+    );
+  };
+
+
+
+  const FilterTab = ({ title, value, current }: { title: string, value: string, current: string }) => (
+    <TouchableOpacity
+      style={[
+        styles.filterTab,
+        value === current && [styles.activeFilterTab, { borderColor: colors.primary }]
+      ]}
+      onPress={() => handleFilterChange(value)}
+    >
+      <Text
+        style={[
+          styles.filterTabText,
+          { color: value === current ? colors.primary : colors.textSecondary }
+        ]}
+      >
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>Order Management</Text>
+        <Button
+          title="Export Data"
+          onPress={() => Alert.alert('Export', 'Export functionality to be implemented')}
+          variant="outline"
+          icon={<Feather name="download" size={18} color={colors.primary} />}
+        />
+      </View>
+
+      {/* Filter Tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterTabsContainer}
+        contentContainerStyle={styles.filterTabs}
+      >
+        <FilterTab title="All Orders" value="all" current={selectedFilter} />
+        <FilterTab title="Pending" value="pending" current={selectedFilter} />
+        <FilterTab title="Confirmed" value="confirmed" current={selectedFilter} />
+        <FilterTab title="Processing" value="processing" current={selectedFilter} />
+        <FilterTab title="Shipped" value="shipped" current={selectedFilter} />
+        <FilterTab title="Delivered" value="delivered" current={selectedFilter} />
+        <FilterTab title="Cancelled" value="cancelled" current={selectedFilter} />
+      </ScrollView>
+
+      {/* Order List */}
+      <FlatList
+        data={filteredOrders}
+        renderItem={renderOrderItem}
+        keyExtractor={(item, index) =>
+          item?.id !== undefined && item?.id !== null ? item.id.toString() : `order-${index}`
+        }
+
+        contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Feather name="package" size={50} color={colors.textSecondary} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              No orders found
+            </Text>
+            <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>
+              {selectedFilter === 'all'
+                ? 'There are no orders in the system yet'
+                : `There are no orders with '${selectedFilter}' status`}
+            </Text>
+          </View>
+        }
+      />
+
+      {/* Assign Franchise Modal */}
+      <Modal
+        visible={assignModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setAssignModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Assign Order to Franchise
+              </Text>
+              <TouchableOpacity onPress={() => setAssignModalVisible(false)}>
+                <Feather name="x" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {selectedOrder && (
+              <View style={styles.orderSummary}>
+                <Text style={[styles.orderSummaryTitle, { color: colors.text }]}>
+                 Order #{selectedOrder?.id ? String(selectedOrder.id).substring(0, 8) : 'Unknown'}
+
+
+                </Text>
+                <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
+                  Customer: {selectedOrder.user?.name || 'Unknown'}
+                </Text>
+                <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
+                  Type: {selectedOrder?.orderType ? selectedOrder.orderType.charAt(0).toUpperCase() + selectedOrder.orderType.slice(1) : 'N/A'}
+                </Text>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              </View>
+            )}
+
+            <Text style={[styles.modalSubtitle, { color: colors.text }]}>
+              Select a franchise to assign this order:
+            </Text>
+
+            <ScrollView style={styles.franchiseListContainer}>
+              {franchises.map(franchise => (
+                <TouchableOpacity
+                  key={franchise.id}
+                  style={[
+                    styles.franchiseItem,
+                    selectedFranchiseId === franchise.id &&
+                    { backgroundColor: colors.primary + '20' }
+                  ]}
+                  onPress={() => setSelectedFranchiseId(franchise.id)}
+                >
+                  <View>
+                    <Text style={[styles.franchiseName, { color: colors.text }]}>
+                      {franchise.name}
+                    </Text>
+                    <Text style={[styles.franchiseLocation, { color: colors.textSecondary }]}>
+                      {franchise.city}, {franchise.state}
+                    </Text>
+                  </View>
+
+                  {selectedFranchiseId === franchise.id && (
+                    <Feather name="check-circle" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <Button
+                title="Cancel"
+                onPress={() => setAssignModalVisible(false)}
+                variant="outline"
+                style={styles.modalButton}
+              />
+              <Button
+                title="Assign Order"
+                onPress={handleAssignOrder}
+                disabled={!selectedFranchiseId}
+                style={styles.modalButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+     {/* ✅ Update Status Modal */}
+     <Modal
+       visible={statusModalVisible}
+       transparent
+       animationType="slide"
+       onRequestClose={() => setStatusModalVisible(false)}
+     >
+       <View style={styles.modalBackground}>
+         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+           <View style={styles.modalHeader}>
+             <Text style={[styles.modalTitle, { color: colors.text }]}>
+               Update Order Status
+             </Text>
+             <TouchableOpacity onPress={() => setStatusModalVisible(false)}>
+               <Feather name="x" size={24} color={colors.text} />
+             </TouchableOpacity>
+           </View>
+
+           {/* Add a list of statuses here if needed */}
+           <Text style={[styles.modalSubtitle, { color: colors.text }]}>Select new status:</Text>
+           <ScrollView style={styles.statusListContainer}>
+             {["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].map(status => (
+               <TouchableOpacity
+                 key={status}
+                 style={[
+                   styles.statusItem,
+                   selectedStatus === status && {
+                     backgroundColor: colors.primary + '20',
+                   }
+                 ]}
+                 onPress={() => setSelectedStatus(status)}
+               >
+                 <Text style={[
+                   styles.statusName,
+                   { color: selectedStatus === status ? colors.primary : colors.text }
+                 ]}>
+                   {status.charAt(0).toUpperCase() + status.slice(1)}
+                 </Text>
+                 {selectedStatus === status && (
+                   <Feather name="check-circle" size={20} color={colors.primary} />
+                 )}
+               </TouchableOpacity>
+             ))}
+           </ScrollView>
+
+           {/* Add status list or input */}
+
+           <View style={styles.modalFooter}>
+             <Button title="Cancel" onPress={() => setStatusModalVisible(false)} variant="outline" />
+             <Button title="Update" onPress={handleUpdateStatus} />
+           </View>
+         </View>
+       </View>
+     </Modal>
+
+   {/* Assign to Service Agent Modal */}
+
+     <Modal
+       visible={agentModalVisible}
+       transparent
+       animationType="slide"
+       onRequestClose={() => setAgentModalVisible(false)} // ✅ close on back press
+     >
+       <View style={styles.modalBackground}>
+         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+           <View style={styles.modalHeader}>
+             <Text style={[styles.modalTitle, { color: colors.text }]}>
+               Assign Order to Service Agent
+             </Text>
+             <TouchableOpacity onPress={() => setAgentModalVisible(false)}>
+               <Feather name="x" size={24} color={colors.text} />
+             </TouchableOpacity>
+           </View>
+
+           <ScrollView style={styles.franchiseListContainer}>
+             {agents.map((agent) => {
+               const agentId = agent.ID ?? agent.id; // fallback if needed
+
+               if (!agentId) {
+                 console.warn("⚠️ Missing agent ID:", agent);
+                 return null;
+               }
+
+               return (
+                 <TouchableOpacity
+                   key={agentId}
+                   style={[
+                     styles.franchiseItem,
+                     selectedAgentId === agentId.toString() && {
+                       backgroundColor: colors.primary + '20',
+                     },
+                   ]}
+                   onPress={() => setSelectedAgentId(agentId.toString())}
+                 >
+                   <View>
+                     <Text style={[styles.franchiseName, { color: colors.text }]}>{agent.name}</Text>
+                     <Text style={[styles.franchiseLocation, { color: colors.textSecondary }]}>
+                       {agent.email} • {agent.phone}
+                     </Text>
+                   </View>
+                   {selectedAgentId === agentId.toString() && (
+                     <Feather name="check-circle" size={20} color={colors.primary} />
+                   )}
+                 </TouchableOpacity>
+               );
+             })}
+           </ScrollView>
+
+           <View style={styles.modalFooter}>
+             <Button title="Cancel" onPress={() => setAgentModalVisible(false)} variant="outline" />
+             <Button title="Assign Agent" onPress={handleAssignAgent} />
+           </View>
+         </View>
+       </View>
+     </Modal>
+
+
+
+
+
+
+      {/* Bottom Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          onPress={() => navigation.navigate('PendingOrders' as never)}
+        >
+          <Feather name="clock" size={20} color="#fff" />
+          <Text style={styles.actionButtonText}>View Pending</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: colors.success }]}
+          onPress={() => navigation.navigate('RecentlyDelivered' as never)}
+        >
+          <Feather name="check-circle" size={20} color="#fff" />
+          <Text style={styles.actionButtonText}>Recently Delivered</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  filterTabsContainer: {
+    marginBottom: 16,
+  },
+  filterTabs: {
+    paddingRight: 16,
+  },
+  filterTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  activeFilterTab: {
+    borderWidth: 1,
+  },
+  filterTabText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  listContainer: {
+    paddingBottom: 100, // Space for bottom action buttons
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    borderRadius: 12,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    marginBottom: 12,
+  },
+  orderSummary: {
+    marginBottom: 16,
+  },
+  orderSummaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  orderSummaryText: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 12,
+  },
+  franchiseListContainer: {
+    maxHeight: 300,
+    marginBottom: 16,
+  },
+  franchiseItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  franchiseName: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  franchiseLocation: {
+    fontSize: 14,
+  },
+  statusListContainer: {
+    maxHeight: 200,
+    marginBottom: 16,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  statusName: {
+    fontSize: 16,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  actionButtonsContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 8,
+    marginHorizontal: 8,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+});
+
+export default OrderManagement;
