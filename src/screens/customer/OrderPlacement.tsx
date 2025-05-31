@@ -32,7 +32,7 @@ const OrderPlacement = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
    const { user } = useAuth();
-   console.log("👤 Logged-in user role:", user?.role); // ✅ Debug role here
+  // ✅ Debug role here
   const route =
     useRoute<RouteProp<Record<string, OrderPlacementParams>, string>>();
 

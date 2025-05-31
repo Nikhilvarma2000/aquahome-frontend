@@ -33,6 +33,9 @@
     const navigation = useNavigation<any>();
     const { user, token } = useAuth();
 
+    console.log("👤 Logged-in user role:", user); // ✅ Debug role here
+
+
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState<Order[]>([]);
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -69,7 +72,7 @@
      if (user?.role === "admin") {
        rawData = await adminService.getAllOrders();
      } else if (user?.role === "franchise_owner") {
-       rawData = await franchiseService.getFranchiseOrders(token!); // ✅ Use correct service
+       rawData = await franchiseService.getFranchiseOrders(token!,user?.franchise_id!); // ✅ Use correct service
      } else {
        console.warn("⚠️ Unknown role, skipping fetch.");
        return;

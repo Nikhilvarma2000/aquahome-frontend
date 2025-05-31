@@ -16,11 +16,17 @@ async getDashboardData(token: string, franchiseId?: string): Promise<FranchiseDa
   },
 
   // ✅ FETCH ORDERS
-  async getFranchiseOrders(token: string): Promise<any[]> {
-    const res = await api.get('/franchise/orders', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.data;
+  async getFranchiseOrders(token: string, franchiseId: string): Promise<any[]> {
+    try {
+      const res = await api.get(`/franchises/orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (error) {
+      console.error('Error fetching franchise orders:', error);
+      // throw error;
+    }
+  
   },
 
   // ✅ ASSIGN SERVICE AGENT

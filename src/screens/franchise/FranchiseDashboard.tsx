@@ -42,7 +42,7 @@ const FranchiseDashboard = () => {
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [agents, setAgents] = useState<User[]>([]);
 
-
+ 
 const fetchDashboardData = async () => {
   try {
     console.log("🔁 STARTED fetchDashboardData");
@@ -63,7 +63,7 @@ const fetchDashboardData = async () => {
 const fetchOrders = async () => {
   try {
     setLoadingOrders(true);
-    const data = await franchiseService.getFranchiseOrders(token!);
+    const data = await franchiseService.getFranchiseOrders(token!, user?.franchise_id!);
     setOrders(data || []);
   } catch (error: any) {
     if (error.response?.status === 404) {
