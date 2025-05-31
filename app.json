@@ -44,7 +44,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow AquaHome to use your location to find nearby service areas."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {

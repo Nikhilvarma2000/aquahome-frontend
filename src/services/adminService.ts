@@ -1,10 +1,17 @@
 import api from "./api";
-import { Location, AdminDashboardData, Order, Product, ServiceRequest, User } from "@/types";
+import {
+  Location,
+  AdminDashboardData,
+  Order,
+  Product,
+  ServiceRequest,
+  User,
+} from "@/types";
 
 export const adminService = {
-// Existing methods remain unchanged...
+  // Existing methods remain unchanged...
 
-async getDashboardData(): Promise<AdminDashboardData> {
+  async getDashboardData(): Promise<AdminDashboardData> {
     try {
       const [customers, orders] = await Promise.all([
         this.getAllCustomers(),
@@ -67,9 +74,12 @@ async getDashboardData(): Promise<AdminDashboardData> {
 
   async toggleFranchiseStatus(id: number, status: boolean) {
     try {
-      const response = await api.patch(`/admin/franchises/${id}/toggle-status`, {
-        is_active: status,
-      });
+      const response = await api.patch(
+        `/admin/franchises/${id}/toggle-status`,
+        {
+          is_active: status,
+        }
+      );
       return response.data;
     } catch (error) {
       console.error("Toggle franchise status error:", error);
@@ -128,7 +138,10 @@ async getDashboardData(): Promise<AdminDashboardData> {
     }
   },
 
-  async updateOrderStatus(orderId: number | string, status: string): Promise<Order> {
+  async updateOrderStatus(
+    orderId: number | string,
+    status: string
+  ): Promise<Order> {
     try {
       const response = await api.put(`/orders/${orderId}/status`, { status });
       return response.data;
@@ -138,7 +151,10 @@ async getDashboardData(): Promise<AdminDashboardData> {
     }
   },
 
-  async assignOrder(orderId: number | string, franchiseId: number | string): Promise<Order> {
+  async assignOrder(
+    orderId: number | string,
+    franchiseId: number | string
+  ): Promise<Order> {
     try {
       const response = await api.patch(`/orders/${orderId}/assign`, {
         franchise_id: franchiseId,
@@ -152,7 +168,9 @@ async getDashboardData(): Promise<AdminDashboardData> {
 
   async getSubscriptionsByCustomer(customerId: string): Promise<any[]> {
     try {
-      const response = await api.get(`/admin/customers/${customerId}/subscriptions`);
+      const response = await api.get(
+        `/admin/customers/${customerId}/subscriptions`
+      );
       return response.data;
     } catch (error) {
       console.error("Failed to fetch subscriptions by customer:", error);
@@ -170,12 +188,32 @@ async getDashboardData(): Promise<AdminDashboardData> {
     }
   },
 
-  async updateServiceRequest(id: number, data: any): Promise<ServiceRequest> {
+  async updateServiceRequest(
+    id: number,
+    service_agent_id: number
+  ): Promise<ServiceRequest> {
     try {
-      const response = await api.put(`/services/${id}`, data);
+      console.log("🚀 Updating service request:", id, service_agent_id);
+      const response = await api.patch(`/servicerequests/${id}/assign-agent`, {
+        service_agent_id: service_agent_id,
+      });
       return response.data;
     } catch (error) {
       console.error("Update service request error:", error);
+      throw error;
+    }
+  },
+
+  async updateServiceRequestStatus(
+    id: number,
+    status: string
+  ): Promise<ServiceRequest> {
+    try {
+      console.log("🚀 Updating service request status:", id, status);
+      const response = await api.put(`/services/${id}`, { status });
+      return response.data;
+    } catch (error) {
+      console.error("Update service request status error:", error);
       throw error;
     }
   },

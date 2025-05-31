@@ -66,7 +66,7 @@ const ServiceRequestCard: React.FC<ServiceRequestCardProps> = ({ serviceRequest,
               {serviceRequest.type.charAt(0).toUpperCase() + serviceRequest.type.slice(1)}
             </Text>
             <Text style={[styles.requestId, { color: colors.textSecondary }]}>
-              Request #{serviceRequest.id.substring(0, 8)}
+              Request #{serviceRequest?.id}
             </Text>
           </View>
           

@@ -34,6 +34,7 @@ import OrdersLiting from "@/screens/customer/OrdersListing";
 import ServiceAgentDashboard from "../screens/serviceagent/ServiceAgentDashboard";
 import TaskManagement from "../screens/serviceagent/TaskManagement";
 import ServiceLogs from "../screens/serviceagent/ServiceLogs";
+import AgentOrdersScreen from "../screens/agent/AgentOrdersScreen";
 
 // Common Screens
 import ProfileScreen from "../screens/common/ProfileScreen";
@@ -263,6 +264,16 @@ const ServiceAgentTabNavigator = () => {
           title: "Tasks",
           tabBarIcon: ({ color, size }) => (
             <Feather name="clipboard" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AgentOrders"
+        component={AgentOrdersScreen}
+        options={{
+          title: "My Orders",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="package" size={size} color={color} />
           ),
         }}
       />

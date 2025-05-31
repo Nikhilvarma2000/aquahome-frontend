@@ -21,12 +21,15 @@ import { Platform } from "react-native";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useAuth } from "@/hooks/useAuth";
 
 const ServiceRequest = ({ route, navigation }: any) => {
   const { colors } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
+
+  const {user} = useAuth();
 
   // Form state
   const [selectedSubscription, setSelectedSubscription] = useState<number>();
@@ -75,6 +78,7 @@ const ServiceRequest = ({ route, navigation }: any) => {
   }, []);
 
   const validateForm = () => {
+   
     const newErrors: { [key: string]: string } = {};
 
     if (!selectedSubscription) {
@@ -85,7 +89,7 @@ const ServiceRequest = ({ route, navigation }: any) => {
       newErrors.serviceType = "Please select a service type";
     }
 
-    if (validationService.isEmpty(description)) {
+    if (!description) {
       newErrors.description =
         "Please provide a description of the service needed";
     }
@@ -97,10 +101,13 @@ const ServiceRequest = ({ route, navigation }: any) => {
     }
 
     setErrors(newErrors);
+  
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
+
+  
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -109,10 +116,11 @@ const ServiceRequest = ({ route, navigation }: any) => {
       const formattedDate = preferredDate.toISOString();
 
       const serviceRequestData: Partial<ServiceRequestType> = {
-        subscriptionId: selectedSubscription,
-        type: serviceType,
+        subscription_id: selectedSubscription,
+        request_type: serviceType,
         description,
-        scheduledDate: formattedDate,
+        scheduled_time: formattedDate,
+        // user_id: user?.id,
       };
 
       await customerService.createServiceRequest(serviceRequestData);

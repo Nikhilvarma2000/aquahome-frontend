@@ -5,8 +5,48 @@ import { useTheme } from '../hooks/useTheme';
 import { Subscription } from '../types';
 import Card from './ui/Card';
 
+// {
+//   "created_at": "2025-06-01T00:49:08.73918+05:30",
+//   "customer_id": 4,
+//   "end_date": "2025-07-01T00:49:08.738247+05:30",
+//   "franchise_id": 1,
+//   "franchise_name": "Kodad",
+//   "id": 2,
+//   "is_active": true,
+//   "monthly_rent": 500,
+//   "next_billing_date": "2025-07-01T00:49:08.738247+05:30",
+//   "next_service": "2025-09-01T00:49:08.738247+05:30",
+//   "order_id": 8,
+//   "product_id": 2,
+//   "product_image": "https://example.com/product.png",
+//   "product_name": "P2",
+//   "rental_duration": 1,
+//   "start_date": "2025-06-01T00:49:08.738247+05:30",
+//   "status": "active",
+//   "updated_at": "2025-06-01T00:49:08.73918+05:30"
+// }
+
 interface SubscriptionCardProps {
-  subscription: Subscription;
+  subscription: {
+    created_at: string;
+    customer_id: number;
+    end_date: string;
+    franchise_id: number;
+    franchise_name: string;
+    id: number;
+    is_active: boolean;
+    monthly_rent: number;           
+    next_billing_date: string;
+    next_service: string;
+    order_id: number;
+    product_id: number;
+    product_image: string;
+    product_name: string;
+    rental_duration: number;
+    start_date: string;
+    status: string;
+    updated_at: string;
+  };
     onPress?: () => void;
 
 }
@@ -39,7 +79,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ subscription, onPre
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Text style={[styles.productName, { color: colors.text }]}>
-              {subscription.productName || 'Water Purifier Subscription'}
+              {subscription.product_name || 'Water Purifier Subscription'}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
               <Text style={styles.statusText}>
@@ -53,41 +93,41 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({ subscription, onPre
           <View style={styles.detailRow}>
             <Feather name="calendar" size={16} color={colors.textSecondary} />
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              Started: {formatDate(subscription.startDate)}
+              Started: {formatDate(subscription.start_date)}
             </Text>
           </View>
           
           <View style={styles.detailRow}>
             <Feather name="refresh-cw" size={16} color={colors.textSecondary} />
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              Renewal: {formatDate(subscription.nextBillingDate)}
+              Renewal: {formatDate(subscription?.next_billing_date)}
             </Text>
           </View>
           
           <View style={styles.detailRow}>
             <Feather name="credit-card" size={16} color={colors.textSecondary} />
             <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-               Monthly Fee: ₹{subscription.monthlyRent.toFixed(2)}
+               Monthly Fee: ₹{subscription?.monthly_rent?.toFixed(2)}
             </Text>
           </View>
         </View>
         
         <View style={styles.footer}>
           <View style={[styles.paymentStatusBadge, { 
-            backgroundColor: subscription.paymentStatus === 'paid' 
+            backgroundColor: subscription?.status === 'active' 
               ? colors.success + '20' 
-              : subscription.paymentStatus === 'pending' 
+              : subscription?.status === 'paused' 
                 ? colors.warning + '20' 
                 : colors.error + '20'
           }]}>
             <Text style={[styles.paymentStatusText, { 
-              color: subscription.paymentStatus === 'paid' 
+              color: subscription?.status === 'active' 
                 ? colors.success 
-                : subscription.paymentStatus === 'pending' 
+                : subscription?.status === 'paused' 
                   ? colors.warning 
                   : colors.error
             }]}>
-              {subscription.paymentStatus.charAt(0).toUpperCase() + subscription.paymentStatus.slice(1)}
+              {subscription?.status?.charAt(0).toUpperCase() + subscription?.status?.slice(1)}
             </Text>
           </View>
           

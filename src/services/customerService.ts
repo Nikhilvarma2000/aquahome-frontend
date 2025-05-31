@@ -57,6 +57,26 @@ export const customerService = {
     }
   },
 
+  async getRequests(): Promise<ServiceRequest[]> {
+    try {
+      const response = await api.get("/services/customer");
+      return response.data;
+    } catch (error) {
+      console.error("Get requests error:", error);
+      throw error;
+    }
+  },
+
+  async getRequestById(requestId: number): Promise<ServiceRequest> {
+    try {
+      const response = await api.get(`/services/${requestId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Get request by id error:", error);
+      throw error;
+    }
+  },
+
   async placeOrder(orderData: {
     product_id: number;
     franchise_id: number;
@@ -74,18 +94,26 @@ export const customerService = {
     }
   },
 
- async cancelOrder(orderId: number): Promise<{ message: string }> {
-  try {
-    const response = await api.post(`/orders/${orderId}/cancel`);
-    return response.data;
-  } catch (error) {
-    console.error("Cancel order error:", error);
-    throw error;
-  }
-},
+  async cancelOrder(
+    orderId: number,
+    token: string = ""
+  ): Promise<{ message: string }> {
+    try {
+      const response = await api.post(`/orders/${orderId}/cancel`,{}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      throw error;
+    }
+  },
   async getSubscriptions(): Promise<Subscription[]> {
     try {
       const response = await api.get("/subscriptions/customer");
+      console.log("📦 Subscriptions Response from backend: ", response.data);
       return response.data;
     } catch (error) {
       console.error("Get subscriptions error:", error);
@@ -174,7 +202,7 @@ export const customerService = {
   ): Promise<ServiceRequest> {
     try {
       const response = await api.post(
-        "/customer/service-requests",
+        "/services",
         serviceData
       );
       return response.data;

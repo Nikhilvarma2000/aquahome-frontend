@@ -2,24 +2,45 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, Alert } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { customerService } from "../../services/customerService";
-import { Order } from "../../types";
-import Loading from "../../components/ui/Loading";
 import { useTheme } from "../../hooks/useTheme";
+import Loading from "../../components/ui/Loading";
 import Button from "@/components/ui/Button";
+
+interface Request {
+  completion_time: string | null;
+  created_at: string;
+  customer_email: string;
+  customer_id: number;
+  customer_name: string;
+  customer_phone: string;
+  description: string;
+  feedback: string;
+  franchise_id: number;
+  franchise_name: string;
+  id: number;
+  product_id: number;
+  product_name: string;
+  rating: number | null;
+  scheduled_time: string;
+  service_agent_id: number | null;
+  service_agent_name: string;
+  status: string;
+  subscription_id: number;
+  type: string;
+  updated_at: string;
+}
 
 const RequestDetailsScreen = () => {
   const route = useRoute<any>();
   const { colors } = useTheme();
 
-  var [order, setOrder] = useState<Order>(route.params.order);
+  const [order, setOrder] = useState<Request>(route.params.request);
   const [loading, setLoading] = useState(true);
 
   const fetchOrder = async () => {
     try {
-      customerService.getOrderById(order.id).then((res) => {
-        setOrder(res);
-        console.log("order: ", order);
-      });
+      const res = await customerService.getRequestById(order.id);
+      setOrder(res);
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Failed to load order details");
@@ -35,16 +56,14 @@ const RequestDetailsScreen = () => {
         return;
       }
 
-      console.log("🧨 Cancelling Order ID:", order.id);
       await customerService.cancelOrder(order.id);
-      await fetchOrder(); // Refresh
+      await fetchOrder();
       Alert.alert("Cancelled", "Order cancelled successfully.");
     } catch (error) {
       console.error("Cancel order error:", error);
       Alert.alert("Error", "Failed to cancel order");
     }
   };
-
 
   useEffect(() => {
     if (!order.id || typeof order.id !== "number") {
@@ -65,28 +84,44 @@ const RequestDetailsScreen = () => {
     <ScrollView style={styles.container}>
       <View style={styles.card}>
         <Text style={[styles.orderId, { color: colors.text }]}>
-          Order #{order.id}
+          Request #{order.id}
         </Text>
         <Text style={[styles.status, { color: colors.textSecondary }]}>
           Status: {order.status}
         </Text>
-        <Text style={[styles.address, { color: colors.text }]}>
-          Shipping Address: {order.deliveryAddress}
+        <Text style={[styles.product, { color: colors.text }]}>
+          Type: {order.type}
         </Text>
         <Text style={[styles.product, { color: colors.text }]}>
-          Product: {order.productId || "N/A"}
+          Product: {order.product_name || "N/A"}
         </Text>
-        <Text style={[styles.total, { color: colors.text }]}>
-          Total: ₹{order.totalAmount?.toFixed(2) || "0.00"}
+        <Text style={[styles.product, { color: colors.text }]}>
+          Scheduled Time: {new Date(order.scheduled_time).toLocaleString()}
         </Text>
+        <Text style={[styles.product, { color: colors.text }]}>
+          Customer: {order.customer_name} ({order.customer_phone})
+        </Text>
+        <Text style={[styles.product, { color: colors.text }]}>
+          Email: {order.customer_email}
+        </Text>
+        {/* <Text style={[styles.product, { color: colors.text }]}>
+          Franchise: {order.franchise_name}
+        </Text> */}
+        <Text style={[styles.product, { color: colors.text }]}>
+          Description: {order.description}
+        </Text>
+        {order.feedback ? (
+          <Text style={[styles.product, { color: colors.text }]}>
+            Feedback: {order.feedback}
+          </Text>
+        ) : null}
       </View>
+
       <View style={styles.footer}>
         <Button
-          title={
-            order.status === "cancelled" ? "Order Cancelled" : "Cancel Order"
-          }
+          title={order.status === "cancelled" ? "Order Cancelled" : "Cancel Order"}
           disabled={order.status === "cancelled"}
-          onPress={() => handleCancelOrder(order)}
+          onPress={handleCancelOrder}
           style={{
             backgroundColor:
               order.status === "cancelled" ? colors.card : colors.error,
@@ -94,7 +129,6 @@ const RequestDetailsScreen = () => {
             flex: 1,
           }}
         />
-        {/* )} */}
       </View>
     </ScrollView>
   );
@@ -126,18 +160,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
   },
-  address: {
-    fontSize: 16,
-    marginTop: 10,
-  },
   product: {
     fontSize: 16,
-    marginTop: 10,
-  },
-  total: {
-    fontSize: 18,
-    marginTop: 10,
-    fontWeight: "500",
+    marginTop: 8,
   },
   footer: {
     flexDirection: "row",

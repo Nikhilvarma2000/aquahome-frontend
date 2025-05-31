@@ -8,7 +8,8 @@ import * as Location from 'expo-location';
 import axios from 'axios';
 
 import RootNavigator from './src/navigation/RootNavigator';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { AuthProvider } from './src/context/AuthContext';
+import { useAuth } from './src/hooks/useAuth';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { LocationProvider } from './src/context/LocationContext';
 
@@ -25,7 +26,7 @@ if (Platform.OS === 'web') {
 }
 
 function MainApp() {
-  const { userToken } = useAuth();
+  const { token } = useAuth();
 
   useEffect(() => {
     const updateLocation = async () => {
@@ -41,13 +42,13 @@ function MainApp() {
 
         console.log('📍 Location:', latitude, longitude);
 
-        if (userToken) {
+        if (token) {
           await axios.post(
-            'https://aquahome-backend.onrender.com/api/profile/location',
+            'http://192.168.54.125:5001/api/profile/location',
             { latitude, longitude },
             {
               headers: {
-                Authorization: `Bearer ${userToken}`,
+                Authorization: `Bearer ${token}`,
               },
             }
           );
@@ -59,7 +60,7 @@ function MainApp() {
     };
 
     updateLocation();
-  }, [userToken]);
+  }, [token]);
 
   return (
     <>

@@ -36,7 +36,7 @@ const RequestCard = ({
             {request.id}
           </Text>
           <Text style={[styles.requestId, { color: colors.textSecondary }]}>
-            {request.createdAt.split("T")[0]} - {request.type} ({request.status}
+            {request.scheduled_time?.split("T")[0]} - {request.type} ({request.status}
             )
           </Text>
         </View>

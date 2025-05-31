@@ -66,13 +66,12 @@ export interface Order {
     | "delivered"
     | "cancelled";
   orderType: "purchase" | "rental";
-  totalAmount: number;
+  total_amount: number;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   deliveryAddress: string;
-  deliveryDate?: string;
   product?: Product;
   user?: User;
-  createdAt: string;
+  delivery_date: string;
   updatedAt: string;
 }
 
@@ -90,7 +89,7 @@ export interface Subscription {
   paymentStatus: "pending" | "paid" | "failed";
   product?: Product;
   maintenanceSchedule?: MaintenanceSchedule[];
-  createdAt: string;
+  created_at: string;
   updatedAt: string;
 }
 
