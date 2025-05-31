@@ -18,6 +18,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
 import { franchiseService } from '@/services/franchiseService';
+import { adminService } from '@/services/adminService';
 
 
 
@@ -31,7 +32,7 @@ const customerService = {
     const data = await adminService.getAllCustomers(); //  Real API call
     const lowerQuery = query.toLowerCase();
     
-    return allCustomers.filter(customer => 
+    return data.filter(customer => 
       customer.name.toLowerCase().includes(lowerQuery) ||
       customer.email.toLowerCase().includes(lowerQuery) ||
       customer.phone?.includes(query) ||

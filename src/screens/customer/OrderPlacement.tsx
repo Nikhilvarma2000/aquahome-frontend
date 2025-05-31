@@ -32,6 +32,7 @@ const OrderPlacement = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
    const { user } = useAuth();
+   console.log("👤 Logged-in user role:", user?.role); // ✅ Debug role here
   const route =
     useRoute<RouteProp<Record<string, OrderPlacementParams>, string>>();
 
@@ -111,103 +112,84 @@ useEffect(() => {
     }
   };
 
+ const handlePlaceOrder = async () => {
+   if (!product) return;
 
-
-  const handlePlaceOrder = async () => {
-    if (!product) return;
-
-    if (!deliveryAddress.trim()) {
-      Alert.alert("Error", "Please enter a delivery address");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      // 1. Place the order
-      const orderData = {
-        product_id: Number(product.id),
-       franchise_id: user?.franchise_id || 1,
-        shipping_address: deliveryAddress,
-        billing_address: deliveryAddress,
-        rental_duration: orderType === "rental" ? 6 : 1,
-        notes: specialInstructions || "",
-      };
-
-        console.log("Sending order:", orderData);
-
-
-
-      const placedOrderResponse = await customerService.placeOrder(orderData);
-      console.log("💡 Full Order Response:", placedOrderResponse);
-
-   const order = placedOrderResponse?.order;
-
-   if (!order || !order.ID) {
-     console.error("🚨 Order ID missing in response:", placedOrderResponse);
-     Alert.alert("Order Failed", "No valid order received from server.");
+   if (!deliveryAddress.trim()) {
+     Alert.alert("Error", "Please enter a delivery address");
      return;
    }
 
-   const aquahomeOrderId = order.ID;
-   console.log("✅ Final Order ID passed to Razorpay:", aquahomeOrderId);
-      // 2. Generate Razorpay Order
-      const paymentRes = await api.post('/payments/generate-order', {
-        order_id: aquahomeOrderId
-      });
+   try {
+     setSubmitting(true);
 
-      const { razorpay_order_id, amount, currency, key } = paymentRes.data;
+     // 1. Generate Razorpay Order first (no actual order in DB yet)
+     const tempOrderRes = await api.post('/payments/generate-order', {
+       temp: true // this is just a flag if needed
+     });
 
-      // 3. Open Razorpay checkout
-      const options = {
-        description: 'AQUA_HOME Order Payment',
-        image: 'https://your-logo-url.com/logo.png', // optional
-        currency: currency,
-        key: key,
-        amount: amount * 100, // amount in paise
-        order_id: razorpay_order_id,
-        name: 'AquaHome',
-        prefill: {
-          email: user?.email ?? '',
-          contact: user?.phone ?? '',
-          name: user?.name ?? ''
-        },
-        theme: { color: '#00AEEF' }
-      };
+     const { razorpay_order_id, amount, currency, key } = tempOrderRes.data;
 
-      RazorpayCheckout.open(options).then(async (paymentResult) => {
-        // 4. Verify payment
-        const verifyPayload = {
-          payment_id: paymentResult.razorpay_payment_id,
-          order_id: paymentResult.razorpay_order_id,
-          signature: paymentResult.razorpay_signature,
-          aquahome_order_id: aquahomeOrderId
-        };
+     const options = {
+       description: 'AQUA_HOME Order Payment',
+       image: 'https://your-logo-url.com/logo.png',
+       currency: currency,
+       key: key,
+       amount: amount * 100,
+       order_id: razorpay_order_id,
+       name: 'AquaHome',
+       prefill: {
+         email: user?.email ?? '',
+         contact: user?.phone ?? '',
+         name: user?.name ?? ''
+       },
+       theme: { color: '#00AEEF' }
+     };
 
-        const verifyRes = await api.post('/payments/verify', verifyPayload);
+     RazorpayCheckout.open(options).then(async (paymentResult) => {
+       // 2. Verify Payment
+       const verifyRes = await api.post('/payments/verify', {
+         payment_id: paymentResult.razorpay_payment_id,
+         order_id: paymentResult.razorpay_order_id,
+         signature: paymentResult.razorpay_signature
+       });
 
-        if (verifyRes.data.success) {
-          Alert.alert("✅ Payment Successful", "Order confirmed!", [
-            {
-              text: "View Orders",
-              onPress: () => navigation.navigate("OrdersListing" as never),
-            },
-          ]);
-        } else {
-          Alert.alert("⚠️ Verification Failed", "Payment could not be verified.");
-        }
-      }).catch((err) => {
-        console.warn("Payment cancelled or failed", err);
-        Alert.alert("❌ Payment Cancelled", "Your payment was not completed.");
-      });
+       if (verifyRes.data.success) {
+         // 3. Create AquaHome order only after payment is verified
+         const orderData = {
+           product_id: Number(product.id),
+           franchise_id: user?.franchise_id || 1,
+           shipping_address: deliveryAddress,
+           billing_address: deliveryAddress,
+           rental_duration: orderType === "rental" ? 6 : 1,
+           notes: specialInstructions || "",
+           order_type: orderType,
+         };
 
-    } catch (err) {
-      console.error("Order error:", err);
-      Alert.alert("Sorry ❌", "Failed to place order or start payment.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+         const placedOrderResponse = await customerService.placeOrder(orderData);
+
+         Alert.alert("✅ Payment Successful", "Order confirmed!", [
+           {
+             text: "View Orders",
+             onPress: () => navigation.navigate("OrdersListing" as never),
+           },
+         ]);
+       } else {
+         Alert.alert("⚠️ Verification Failed", "Payment could not be verified.");
+       }
+     }).catch((err) => {
+       console.warn("Payment cancelled or failed", err);
+       Alert.alert("❌ Payment Cancelled", "Your payment was not completed.");
+     });
+
+   } catch (err) {
+     console.error("Order error:", err);
+     Alert.alert("Sorry ❌", "Something went wrong. Please try again.");
+   } finally {
+     setSubmitting(false);
+   }
+ };
+
 
   if (loading) {
     return <Loading />;

@@ -72,17 +72,18 @@ function MainApp() {
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <LocationProvider>
-                  <RootNavigator />
-                  <StatusBar style="auto" />
-                </LocationProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      );
-    }
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <LocationProvider>
+              {/* 🔥 Use MainApp instead of RootNavigator */}
+              <MainApp />
+              <StatusBar style="auto" />
+            </LocationProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
 

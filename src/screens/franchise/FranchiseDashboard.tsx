@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { User } from '../../types';
+
 import {
   View,
   Text,
@@ -23,19 +25,30 @@ import { franchiseService } from '../../services/franchiseService';
 
 const FranchiseDashboard = () => {
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigation = useNavigation<any>();
 
   const [dashboardData, setDashboardData] = useState<FranchiseDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [agentModalVisible, setAgentModalVisible] = useState(false);
+
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [agents, setAgents] = useState<User[]>([]);
+
 
 const fetchDashboardData = async () => {
   try {
     console.log("🔁 STARTED fetchDashboardData");
     setLoading(true);
 
-    const data = await franchiseService.getDashboardData();
+   const data = await franchiseService.getDashboardData(token!);
     console.log("✅ Received Dashboard Data:", data);
 
     setDashboardData(data);
@@ -47,6 +60,62 @@ const fetchDashboardData = async () => {
     setLoading(false);
   }
 };
+const fetchOrders = async () => {
+  try {
+    setLoadingOrders(true);
+    const data = await franchiseService.getFranchiseOrders(token!);
+    setOrders(data || []);
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      console.warn("📭 No orders found.");
+      setOrders([]);
+    } else {
+      console.error("❌ Error fetching orders:", error);
+      Alert.alert("Error", "Failed to load franchise orders");
+    }
+  } finally {
+    setLoadingOrders(false);
+  }
+};
+
+const fetchAgents = async () => {
+  try {
+   const data = await franchiseService.getFranchiseAgents(token!); // 🔥 Make sure this endpoint exists
+    setAgents(data || []);
+  } catch (error) {
+    console.error("❌ Error fetching agents:", error);
+    Alert.alert("Error", "Failed to fetch service agents");
+  }
+};
+
+const assignAgent = async () => {
+  if (!selectedOrder || !selectedAgentId) return;
+
+  try {
+    await franchiseService.assignServiceAgent(selectedOrder.id, Number(selectedAgentId), token!);
+    Alert.alert("Success", "Agent assigned successfully");
+    fetchOrders(); // refresh the order list
+    setAgentModalVisible(false);
+  } catch (error) {
+    console.error("❌ Error assigning agent:", error);
+    Alert.alert("Error", "Failed to assign agent");
+  }
+};
+
+const updateOrderStatus = async () => {
+  if (!selectedOrder || !selectedStatus) return;
+
+  try {
+    await franchiseService.updateOrderStatus(selectedOrder.id, selectedStatus, token!);
+    Alert.alert("Success", "Order status updated");
+    fetchOrders(); // refresh the order list
+    setStatusModalVisible(false);
+  } catch (error) {
+    console.error("❌ Error updating status:", error);
+    Alert.alert("Error", "Failed to update order status");
+  }
+};
+
 
 
  useEffect(() => {
@@ -56,10 +125,11 @@ const fetchDashboardData = async () => {
    if (user?.role === 'franchise_owner') {
      console.log("✅ User is franchise_owner, calling fetchDashboardData()");
      fetchDashboardData();
+     fetchOrders();
    } else {
      console.log("❌ User is not franchise_owner or user is null");
    }
- }, [user]);
+ }, [user, token]);
 
 
   const onRefresh = async () => {
@@ -278,6 +348,50 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
           </Card>
         </View>
       )}
+  {/* ✅ Franchise Orders List with Manage Options */}
+  <View style={styles.section}>
+    <Text style={[styles.sectionTitle, { color: colors.text }]}>Franchise Orders</Text>
+
+    {loadingOrders ? (
+      <Loading />
+    ) : orders.length > 0 ? (
+      <FlatList
+        data={orders}
+        renderItem={({ item }) => (
+          <Card style={{ marginBottom: 10 }}>
+            <OrderItem order={item} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+              <Button
+                title="Assign Agent"
+                onPress={() => {
+                  setSelectedOrder(item);
+                  fetchAgents(); // fetch agents before showing modal
+                  setAgentModalVisible(true);
+                }}
+              />
+              <Button
+                title="Update Status"
+                onPress={() => {
+                  setSelectedOrder(item);
+                  setSelectedStatus(item.status);
+                  setStatusModalVisible(true);
+                }}
+              />
+            </View>
+          </Card>
+        )}
+        keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
+        scrollEnabled={false}
+      />
+    ) : (
+      <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+        <Feather name="package" size={24} color={colors.textSecondary} />
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          No orders available
+        </Text>
+      </Card>
+    )}
+  </View>
     </ScrollView>
   );
 };

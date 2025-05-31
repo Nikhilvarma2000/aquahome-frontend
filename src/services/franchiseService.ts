@@ -2,19 +2,54 @@ import api from './api';
 import { FranchiseDashboardData, Franchise, Location } from '@/types';
 
 export const franchiseService = {
-async getDashboardData(franchiseId?: string): Promise<FranchiseDashboardData> {
+// ✅ FETCH DASHBOARD DATA
+async getDashboardData(token: string, franchiseId?: string): Promise<FranchiseDashboardData> {
     const url = franchiseId
       ? `/franchise/dashboard?franchiseId=${franchiseId}`
       : `/franchise/dashboard`;
 
-    console.log('🌐 API CALL to:', url);
-
-    const res = await api.get(url);
-    console.log('📦 API Response:', res.data);
+    const res = await api.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     return res.data;
   },
 
+  // ✅ FETCH ORDERS
+  async getFranchiseOrders(token: string): Promise<any[]> {
+    const res = await api.get('/franchise/orders', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  },
+
+  // ✅ ASSIGN SERVICE AGENT
+  async assignServiceAgent(orderId: number, serviceAgentId: number, token: string): Promise<void> {
+    await api.patch(
+      `/franchise/orders/${orderId}/assign-agent`,
+      { service_agent_id: serviceAgentId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  },
+
+  // ✅ GET SERVICE AGENTS
+  async getFranchiseAgents(token: string): Promise<any[]> {
+    const res = await api.get('/franchise/agents', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  },
+
+  // ✅ UPDATE ORDER STATUS
+  async updateOrderStatus(orderId: number, status: string, token: string): Promise<void> {
+    await api.patch(
+      `/franchise/orders/${orderId}/status`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  },
+
+  // 💼 Admin-only APIs (no token needed unless protected)
   async deleteFranchise(id: number): Promise<void> {
     await api.delete(`/franchises/${id}`);
   },
@@ -48,14 +83,10 @@ async getDashboardData(franchiseId?: string): Promise<FranchiseDashboardData> {
   },
 
   async getFranchiseLocations(): Promise<Location[]> {
-    try {
-      const response = await api.get("/franchises/locations");
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching franchise locations:", error);
-      throw error;
-    }
+    const response = await api.get("/franchises/locations");
+    return response.data;
   },
+
   async addFranchiseLocation(locationData: {
     name: string;
     zipCodes: string[];
@@ -71,7 +102,5 @@ async getDashboardData(franchiseId?: string): Promise<FranchiseDashboardData> {
 
   async deleteFranchiseLocation(id: string): Promise<void> {
     await api.delete(`/franchise/locations/${id}`);
-  }
-
-
+  },
 };

@@ -2,6 +2,8 @@
   import { adminService } from '../../services/adminService';
   import { franchiseService } from '../../services/franchiseService';
   import api from '../../services/api';
+  import { useAuth } from '../../hooks/useAuth';
+
 
   import {
     View,
@@ -29,6 +31,7 @@
     const OrderManagement = () => {
     const { colors } = useTheme();
     const navigation = useNavigation<any>();
+    const { user, token } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState<Order[]>([]);
@@ -57,47 +60,52 @@
       applyFilters();
     }, [selectedFilter, orders]);
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
+ const fetchOrders = async () => {
+   try {
+     setLoading(true);
 
-      const rawData = await adminService.getAllOrders();
+     let rawData = [];
 
-      if (!Array.isArray(rawData)) {
-        console.error('🚨 rawData is not an array:', rawData);
-        setOrders([]);
-        setFilteredOrders([]);
-        return;
-      }
+     if (user?.role === "admin") {
+       rawData = await adminService.getAllOrders();
+     } else if (user?.role === "franchise_owner") {
+       rawData = await franchiseService.getFranchiseOrders(token!); // ✅ Use correct service
+     } else {
+       console.warn("⚠️ Unknown role, skipping fetch.");
+       return;
+     }
 
-      const data = rawData.map((item, index) => {
-        const order = item.order || item;
-        const orderId = order.id || order.ID || item.ID || `temp-${index}`; // avoid undefined
+     if (!Array.isArray(rawData)) {
+       console.error('🚨 rawData is not an array:', rawData);
+       setOrders([]);
+       setFilteredOrders([]);
+       return;
+     }
 
-        return {
-          id: orderId,
-          ...order,
-          product: item.product || order.product || {},
-          customer: item.customer || order.customer || {},
-          franchise: item.franchise || order.franchise || {},
+     const data = rawData.map((item, index) => {
+       const order = item.order || item;
+       const orderId = order.id || order.ID || item.ID || `temp-${index}`;
 
-          // ✅ Fix for total amount
-          totalAmount: order.total_initial_amount ?? 0,
-        };
-      });
+       return {
+         id: orderId,
+         ...order,
+         product: item.product || order.product || {},
+         customer: item.customer || order.customer || {},
+         franchise: item.franchise || order.franchise || {},
+         totalAmount: order.total_initial_amount ?? 0,
+       };
+     });
 
+     setOrders(data);
+     setFilteredOrders(data);
+   } catch (error) {
+     console.error('❌ Error fetching orders:', error);
+     Alert.alert('Error', 'Failed to load orders');
+   } finally {
+     setLoading(false);
+   }
+ };
 
-
-
-      setOrders(data);
-      setFilteredOrders(data);
-    } catch (error) {
-      console.error('❌ Error fetching orders:', error);
-      Alert.alert('Error', 'Failed to load orders');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchFranchises = async () => {
     try {
@@ -110,11 +118,19 @@
 
   const fetchAgents = async () => {
     try {
-      const response = await api.get("/admin/users/role/service_agent");
+      let response;
+      if (user?.role === "admin") {
+        response = await api.get("/admin/users/role/service_agent");
+      } else if (user?.role === "franchise_owner") {
+        response = await franchiseService.getFranchiseAgents(); // Create this if needed
+      } else {
+        console.warn("⚠️ Agent fetch skipped: Unknown role");
+        return;
+      }
 
       const normalized = response.data.map((agent: any) => ({
         ...agent,
-        id: agent.id || agent.ID, // ✅ fallback to agent.ID
+        id: agent.id || agent.ID,
       }));
 
       setAgents(normalized);
@@ -122,6 +138,7 @@
       console.error("Error fetching agents:", error);
     }
   };
+
 
 
 
@@ -371,7 +388,7 @@
 
                 </Text>
                 <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
-                  Customer: {selectedOrder.user?.name || 'Unknown'}
+                  Customer: {selectedOrder?.user?.name || 'Unknown'}
                 </Text>
                 <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
                   Type: {selectedOrder?.orderType ? selectedOrder.orderType.charAt(0).toUpperCase() + selectedOrder.orderType.slice(1) : 'N/A'}

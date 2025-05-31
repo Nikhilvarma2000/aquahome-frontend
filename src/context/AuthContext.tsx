@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authService } from "../services/authService";
 import { User, LoginParams, RegisterParams, AuthResponse } from "../types";
+import { useContext } from 'react';
+
 
 
 interface AuthContextType {
@@ -135,3 +137,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       </AuthContext.Provider>
     );
   };
+export const useAuth = () => useContext(AuthContext);
