@@ -252,7 +252,7 @@ const AdminDashboard = () => {
       </View>
 
        {/*Recent Customers Section*/}
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Recent Customers
@@ -263,9 +263,9 @@ const AdminDashboard = () => {
             variant="outline"
             size="small"
           />
-        </View>
+        </View> */}
         
-        {dashboardData?.recentCustomers && dashboardData.recentCustomers.length > 0 ? (
+        {/* {dashboardData?.recentCustomers && dashboardData.recentCustomers.length > 0 ? (
           <FlatList
             data={dashboardData.recentCustomers.slice(0, 4)}
             renderItem={({ item }) => (
@@ -291,10 +291,10 @@ const AdminDashboard = () => {
             </Text>
           </Card>
         )}
-      </View>
+      </View> */}
       
     {/* Service Requests Section */}
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Recent Service Requests
@@ -332,7 +332,7 @@ const AdminDashboard = () => {
             </Text>
           </Card>
         )}
-      </View>
+      </View> */}
       
       {/* Footer Action Buttons */}
       <View style={styles.footerActions}>

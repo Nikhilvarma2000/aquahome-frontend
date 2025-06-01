@@ -447,6 +447,11 @@ const FranchiseStackNavigator = () => {
         component={OrderDetailsScreen}
         options={{ title: "Order Details" }}
       />
+      <Stack.Screen
+        name="ServiceRequestScreenFranchise"
+        component={ServiceRequestsScreen}
+        options={{ title: "Service Request" }}
+      />
 
     </Stack.Navigator>
   );

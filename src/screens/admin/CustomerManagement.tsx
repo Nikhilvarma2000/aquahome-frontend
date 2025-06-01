@@ -175,12 +175,12 @@ const CustomerManagement = () => {
           )}
         </View>
         
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.primary + '20' }]}
           onPress={() => showActionModal(item)}
         >
           <Feather name="more-vertical" size={20} color={colors.primary} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       
       <View style={styles.locationInfo}>
@@ -195,7 +195,8 @@ const CustomerManagement = () => {
       <View style={styles.cardActions}>
         <Button
           title="View Details"
-          onPress={() => viewCustomerDetails(item)}
+          // onPress={() => viewCustomerDetails(item)}
+          onPress={()=>alert("Feature Coming soon")}
           variant="outline"
           size="small"
         />
@@ -218,11 +219,11 @@ const CustomerManagement = () => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Customer Management</Text>
-        <Button
+        {/* <Button
           title="Add Customer"
           onPress={() => navigation.navigate('AddCustomer' as never)}
           icon={<Feather name="plus" size={18} color="#fff" />}
-        />
+        /> */}
       </View>
       
       <View style={styles.searchFilterContainer}>

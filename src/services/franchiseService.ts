@@ -40,7 +40,7 @@ async getDashboardData(token: string, franchiseId?: string): Promise<FranchiseDa
 
   // ✅ GET SERVICE AGENTS
   async getFranchiseAgents(token: string): Promise<any[]> {
-    const res = await api.get('/franchise/agents', {
+    const res = await api.get('/franchises/service-agents', {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;

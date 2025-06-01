@@ -331,7 +331,7 @@ const LocationManagement = () => {
         </Text>
       </View>
 
-      <View style={styles.cardFooter}>
+      {/* <View style={styles.cardFooter}>
         <Button
           title="View Customers"
           onPress={() => navigation.navigate('CustomerList', { areaId: item.id })}
@@ -347,7 +347,7 @@ const LocationManagement = () => {
           size="small"
           style={styles.footerButton}
         />
-      </View>
+      </View> */}
     </Card>
   );
 

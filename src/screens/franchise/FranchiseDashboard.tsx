@@ -226,7 +226,7 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
       <View style={styles.actionButtonsContainer}>
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.primary }]}
-          onPress={() => navigation.navigate('ManageOrders' as never)}
+          onPress={() => navigation.navigate('FranchiseOrders' as never)}
         >
           <Feather name="package" size={24} color="white" />
           <Text style={styles.actionButtonText}>Manage Orders</Text>
@@ -234,7 +234,7 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
 
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.info }]}
-          onPress={() => navigation.navigate('ManageServices' as never)}
+          onPress={() => navigation.navigate('ServiceRequestScreenFranchise' as never)}
         >
           <Feather name="tool" size={24} color="white" />
           <Text style={styles.actionButtonText}>Service Requests</Text>
@@ -242,7 +242,7 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
 
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.success }]}
-          onPress={() => navigation.navigate('ManageLocations' as never)}
+          onPress={() => navigation.navigate('LocationManagement' as never)}
         >
           <Feather name="map-pin" size={24} color="white" />
           <Text style={styles.actionButtonText}>Manage Locations</Text>
@@ -250,7 +250,7 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
       </View>
 
       {/* ✅ Pending Orders */}
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Pending Orders</Text>
           <Button
@@ -259,8 +259,8 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
             variant="outline"
             size="small"
           />
-        </View>
-
+        </View> */}
+{/* 
         {dashboardData?.pendingOrders?.length > 0 ? (
           <FlatList
             data={dashboardData.pendingOrders}
@@ -281,9 +281,9 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
             </Text>
           </Card>
         )}
-      </View>
+      </View> */}
 
-      {/* ✅ Service Requests */}
+      {/* ✅ Service Requests
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Service Requests</Text>
@@ -315,10 +315,10 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
             </Text>
           </Card>
         )}
-      </View>
+      </View> */}
 
       {/* ✅ Recent Activity */}
-      {dashboardData?.recentActivity?.length > 0 && (
+      {/* {dashboardData?.recentActivity?.length > 0 && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Activity</Text>
           <Card style={[styles.activityCard, { backgroundColor: colors.card }]}>
@@ -347,7 +347,7 @@ if (!dashboardData) return <Text style={{ padding: 40, fontSize: 18 }}>❌ No Da
             ))}
           </Card>
         </View>
-      )}
+      )} */}
   {/* ✅ Franchise Orders List with Manage Options */}
   <View style={styles.section}>
     <Text style={[styles.sectionTitle, { color: colors.text }]}>Franchise Orders</Text>

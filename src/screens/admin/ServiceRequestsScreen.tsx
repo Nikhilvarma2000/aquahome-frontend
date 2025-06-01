@@ -62,7 +62,7 @@ const ServiceRequestsScreen = () => {
 
   useEffect(() => {
     fetchServiceRequests();
-    fetchFranchises();
+    // fetchFranchises();
     fetchAgents();
   }, [refresh]);
 
@@ -80,8 +80,9 @@ const ServiceRequestsScreen = () => {
         console.log("🚀 ~ fetchServiceRequests ~ data:", data)
       } else if (user?.role === 'franchise_owner') {
         // Filter requests by franchise if needed
-        const allRequests = await adminService.getServiceRequests();
-        data = allRequests.filter(req => req.franchiseId === parseInt(user.id));
+        data = await adminService.getServiceRequests();
+        // console.log("🚀 ~ fetchServiceRequests ~ allRequests:", allRequests)
+        // data = allRequests.filter(req => req.franchiseId === parseInt(user.id));
       } else {
         console.warn('⚠️ Unknown role, skipping fetch.');
         return;
@@ -120,13 +121,13 @@ const ServiceRequestsScreen = () => {
       if (user?.role === "admin") {
         response = await api.get("/admin/users/role/service_agent");
       } else if (user?.role === "franchise_owner") {
-        response = await franchiseService.getFranchiseAgents();
+        response = await franchiseService.getFranchiseAgents(token);
       } else {
         console.warn("⚠️ Agent fetch skipped: Unknown role");
         return;
       }
 
-      const normalized = response.data.map((agent: any) => ({
+      const normalized = response.map((agent: any) => ({
         ...agent,
         id: agent.id || agent.ID,
       }));

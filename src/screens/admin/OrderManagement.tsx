@@ -50,9 +50,9 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    fetchFranchises();
+    // fetchFranchises();
     fetchAgents();
-  }, []);
+  }, [selectedFilter]);
 
   useEffect(() => {
     applyFilters();
@@ -118,14 +118,17 @@ const OrderManagement = () => {
       let response;
       if (user?.role === "admin") {
         response = await api.get("/admin/users/role/service_agent");
+        console.log('response admin agents ',response)
+        response=response.data
       } else if (user?.role === "franchise_owner") {
-        response = await franchiseService.getFranchiseAgents();
+        response = await franchiseService.getFranchiseAgents(token!);
+        console.log('response ',response)
       } else {
         console.warn("⚠️ Agent fetch skipped: Unknown role");
         return;
       }
 
-      const normalized = response.data.map((agent: any) => ({
+      const normalized = response.map((agent: any) => ({
         ...agent,
         id: agent.id || agent.ID,
       }));
@@ -306,7 +309,7 @@ const OrderManagement = () => {
             )
           }
 
-          {
+          {/* {
             item.status !== "cancelled" && item.status !== "delivered" && (
               <TouchableOpacity
                 style={[styles.actionBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}
@@ -320,7 +323,7 @@ const OrderManagement = () => {
                 <Text style={[styles.actionBtnText, { color: colors.primary }]}>Assign Franchise</Text>
               </TouchableOpacity>
             )
-          }
+          } */}
 
 
           
