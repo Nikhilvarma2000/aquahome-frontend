@@ -44,7 +44,7 @@ function MainApp() {
 
         if (token) {
           await axios.post(
-            'http://192.168.54.125:5001/api/profile/location',
+            'https://aqua-backend-dobk.onrender.com/api/profile/location',
             { latitude, longitude },
             {
               headers: {
