@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, Dimensions } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 
 interface LoadingProps {
@@ -8,9 +8,9 @@ interface LoadingProps {
 
 const Loading: React.FC<LoadingProps> = ({ message = 'Loading...' }) => {
   const { colors } = useTheme();
-  
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, width: Dimensions.get('window').width, height: Dimensions.get('window').height, zIndex: 100 }]}>
       <ActivityIndicator size="large" color={colors.primary} />
       {message && (
         <Text style={[styles.message, { color: colors.text }]}>

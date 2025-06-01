@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Feather } from '@expo/vector-icons';
@@ -19,12 +20,27 @@ import Loading from '../../components/ui/Loading';
 import { useNavigation } from '@react-navigation/native';
 import { franchiseService } from '@/services/franchiseService';
 
+const { width } = Dimensions.get('window');
+
+interface BackendServiceArea {
+  ID: number;
+  name: string;
+  zip_codes: string[];
+  is_active: boolean;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt?: string;
+  franchises?: any;
+}
+
 interface ServiceArea {
   id: string;
   name: string;
   zipCodes: string[];
   customerCount: number;
   active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const LocationManagement = () => {
@@ -35,10 +51,26 @@ const LocationManagement = () => {
   const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingArea, setEditingArea] = useState<ServiceArea | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Form state
   const [areaName, setAreaName] = useState('');
   const [zipCodesInput, setZipCodesInput] = useState('');
+
+  // Transform backend data to frontend format
+  const transformBackendData = (backendData: BackendServiceArea[]): ServiceArea[] => {
+    return backendData
+      .filter(item => item && !item.DeletedAt) // Filter out deleted items
+      .map(item => ({
+        id: item.ID.toString(),
+        name: item.name || 'Unnamed Area',
+        zipCodes: item.zip_codes || [],
+        customerCount: 0, // This might need to come from another API call
+        active: item.is_active ?? false,
+        createdAt: item.CreatedAt,
+        updatedAt: item.UpdatedAt,
+      }));
+  };
 
   useEffect(() => {
     fetchServiceAreas();
@@ -48,13 +80,24 @@ const LocationManagement = () => {
     try {
       setLoading(true);
       const data = await franchiseService.getFranchiseLocations();
-      setServiceAreas(data);
+      console.log("🚀 ~ fetchServiceAreas ~ raw data:", data);
+      
+      const transformedData = transformBackendData(data);
+      console.log("🚀 ~ fetchServiceAreas ~ transformed data:", transformedData);
+      
+      setServiceAreas(transformedData);
     } catch (error) {
       console.error('Error fetching service areas:', error);
-      Alert.alert('Error', 'Failed to load service areas');
+      Alert.alert('Error', 'Failed to load service areas. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchServiceAreas();
+    setRefreshing(false);
   };
 
   const openAddModal = () => {
@@ -71,9 +114,14 @@ const LocationManagement = () => {
     setModalVisible(true);
   };
 
+  const validateZipCodes = (zipCodes: string[]): boolean => {
+    const zipCodeRegex = /^\d{5,6}$/; // 5-6 digit zip codes
+    return zipCodes.every(zip => zipCodeRegex.test(zip));
+  };
+
   const handleSubmit = async () => {
     if (!areaName.trim()) {
-      Alert.alert('Error', 'Please enter an area name');
+      Alert.alert('Validation Error', 'Please enter an area name');
       return;
     }
 
@@ -83,43 +131,58 @@ const LocationManagement = () => {
       .filter(zip => zip.length > 0);
 
     if (zipCodes.length === 0) {
-      Alert.alert('Error', 'Please enter at least one ZIP code');
+      Alert.alert('Validation Error', 'Please enter at least one ZIP code');
+      return;
+    }
+
+    if (!validateZipCodes(zipCodes)) {
+      Alert.alert('Validation Error', 'Please enter valid ZIP codes (5-6 digits)');
       return;
     }
 
     try {
+      setLoading(true);
+      
       if (editingArea) {
+    
         const updatedArea = await franchiseService.updateFranchiseLocation(editingArea.id, {
           name: areaName,
-          zipCodes,
-          active: editingArea.active,
-          customerCount: editingArea.customerCount,
+          zip_codes: zipCodes, 
+          is_active: editingArea.active, 
         });
 
+        // Transform the response and update state
+        const transformedArea = transformBackendData([updatedArea])[0];
         setServiceAreas(prev =>
-          prev.map(area => (area.id === editingArea.id ? updatedArea : area))
+          prev.map(area => (area.id === editingArea.id ? transformedArea : area))
         );
         Alert.alert('Success', 'Service area updated successfully');
       } else {
+       
+        
         const newArea = await franchiseService.addFranchiseLocation({
           name: areaName,
-          zipCodes,
+          zip_codes: zipCodes, // Use backend field name
         });
 
-        setServiceAreas(prev => [...prev, newArea]);
+        // Transform the response and update state
+        const transformedArea = transformBackendData([newArea])[0];
+        setServiceAreas(prev => [...prev, transformedArea]);
         Alert.alert('Success', 'Service area added successfully');
       }
       setModalVisible(false);
     } catch (error) {
       console.error('Error saving service area:', error);
-      Alert.alert('Error', 'Failed to save service area');
+      Alert.alert('Error', 'Failed to save service area. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRemoveArea = (area: ServiceArea) => {
     Alert.alert(
       'Confirm Removal',
-      `Are you sure you want to remove ${area.name} from your service areas? This will not affect existing customers.`,
+      `Are you sure you want to remove "${area.name}" from your service areas? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -127,12 +190,15 @@ const LocationManagement = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              setLoading(true);
               await franchiseService.deleteFranchiseLocation(area.id);
               setServiceAreas(prev => prev.filter(a => a.id !== area.id));
               Alert.alert('Success', 'Service area removed successfully');
             } catch (error) {
               console.error('Error removing service area:', error);
-              Alert.alert('Error', 'Failed to remove service area');
+              Alert.alert('Error', 'Failed to remove service area. Please try again.');
+            } finally {
+              setLoading(false);
             }
           },
         },
@@ -142,209 +208,287 @@ const LocationManagement = () => {
 
   const toggleAreaStatus = async (area: ServiceArea) => {
     try {
+      setLoading(true);
       const updatedArea = await franchiseService.updateFranchiseLocation(area.id, {
-        ...area,
-        active: !area.active,
+        name: area.name,
+        zip_codes: area.zipCodes,
+        is_active: !area.active, 
       });
 
+      // Transform the response and update state
+      const transformedArea = transformBackendData([updatedArea])[0];
       setServiceAreas(prev =>
-        prev.map(a => (a.id === area.id ? updatedArea : a))
+        prev.map(a => (a.id === area.id ? transformedArea : a))
       );
 
       Alert.alert(
         'Success',
-        `Service area ${updatedArea.active ? 'activated' : 'deactivated'} successfully`
+        `Service area ${transformedArea.active ? 'activated' : 'deactivated'} successfully`
       );
     } catch (error) {
       console.error('Error updating service area status:', error);
-      Alert.alert('Error', 'Failed to update service area status');
+      Alert.alert('Error', 'Failed to update service area status. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  const renderServiceAreaCard = ({ item }: { item: ServiceArea }) => (
+    <Card style={[styles.areaCard, { backgroundColor: colors.card }]}>
+      <View style={styles.areaCardHeader}>
+        <View style={styles.areaInfo}>
+          <Text style={[styles.areaName, { color: colors.text }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <View
+            style={[
+              styles.statusBadge,
+              { 
+                backgroundColor: item.active 
+                  ? colors.success + '20' 
+                  : colors.error + '20' 
+              },
+            ]}
+          >
+            <Feather 
+              name={item.active ? 'check-circle' : 'pause-circle'} 
+              size={12} 
+              color={item.active ? colors.success : colors.error}
+              style={{ marginRight: 4 }}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                { color: item.active ? colors.success : colors.error },
+              ]}
+            >
+              {item.active ? 'Active' : 'Inactive'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.primary + '15' }]}
+            onPress={() => openEditModal(item)}
+            activeOpacity={0.7}
+          >
+            <Feather name="edit-2" size={16} color={colors.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: item.active 
+                  ? colors.warning + '15' 
+                  : colors.success + '15',
+              },
+            ]}
+            onPress={() => toggleAreaStatus(item)}
+            activeOpacity={0.7}
+          >
+            <Feather
+              name={item.active ? 'pause' : 'play'}
+              size={16}
+              color={item.active ? colors.warning : colors.success}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.error + '15' }]}
+            onPress={() => handleRemoveArea(item)}
+            activeOpacity={0.7}
+          >
+            <Feather name="trash-2" size={16} color={colors.error} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.areaDetails}>
+        <View style={styles.detailRow}>
+          <Feather name="map-pin" size={14} color={colors.textSecondary} />
+          <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>ZIP Codes:</Text>
+        </View>
+        <Text style={[styles.detailValue, { color: colors.text }]}>
+          {item.zipCodes.length > 0 ? item.zipCodes.join(', ') : 'No ZIP codes'}
+        </Text>
+
+        {/* <View style={[styles.detailRow, { marginTop: 8 }]}>
+          <Feather name="users" size={14} color={colors.textSecondary} />
+          <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Customers:</Text>
+        </View>
+        <Text style={[styles.detailValue, { color: colors.text }]}>
+          {item.customerCount || 0}
+        </Text> */}
+
+        <View style={[styles.detailRow, { marginTop: 8 }]}>
+          <Feather name="calendar" size={14} color={colors.textSecondary} />
+          <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Created:</Text>
+        </View>
+        <Text style={[styles.detailValue, { color: colors.text }]}>
+          {new Date(item.createdAt).toLocaleDateString()}
+        </Text>
+      </View>
+
+      <View style={styles.cardFooter}>
+        <Button
+          title="View Customers"
+          onPress={() => navigation.navigate('CustomerList', { areaId: item.id })}
+          variant="outline"
+          size="small"
+          style={styles.footerButton}
+        />
+
+        <Button
+          title="View on Map"
+          onPress={() => navigation.navigate('ServiceAreaMap', { areaId: item.id })}
+          variant="outline"
+          size="small"
+          style={styles.footerButton}
+        />
+      </View>
+    </Card>
+  );
+
+  if (loading && serviceAreas.length === 0) {
     return <Loading />;
   }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Service Area Management</Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Service Areas</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Manage your franchise locations
+          </Text>
+        </View>
         <Button
-          title="Add New Area"
+          title="Add Area"
           onPress={openAddModal}
           icon={<Feather name="plus" size={18} color="white" />}
+          style={styles.addButton}
         />
       </View>
 
       <FlatList
-        data={serviceAreas.filter(area => area != null)}
-        keyExtractor={(item) => item?.id?.toString() ?? Math.random().toString()}
-        renderItem={({ item }) => {
-          if (!item) return null;
-          return (
-            <Card style={[styles.areaCard, { backgroundColor: colors.card }]}>
-              <View style={styles.areaCardHeader}>
-                <View style={styles.areaInfo}>
-                  <Text style={[styles.areaName, { color: colors.text }]}>{item.name}</Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: item.active ? colors.success + '20' : colors.error + '20' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        { color: item.active ? colors.success : colors.error },
-                      ]}
-                    >
-                      {item.active ? 'Active' : 'Inactive'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: colors.primary + '20' }]}
-                    onPress={() => openEditModal(item)}
-                  >
-                    <Feather name="edit-2" size={16} color={colors.primary} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.actionButton,
-                      {
-                        backgroundColor: item.active ? colors.error + '20' : colors.success + '20',
-                      },
-                    ]}
-                    onPress={() => toggleAreaStatus(item)}
-                  >
-                    <Feather
-                      name={item.active ? 'x' : 'check'}
-                      size={16}
-                      color={item.active ? colors.error : colors.success}
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: colors.error + '20' }]}
-                    onPress={() => handleRemoveArea(item)}
-                  >
-                    <Feather name="trash-2" size={16} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.areaDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>ZIP Codes:</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>{item.zipCodes.join(', ')}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Customers:</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>{item.customerCount}</Text>
-                </View>
-              </View>
-
-              <View style={styles.cardFooter}>
-                <Button
-                  title="View Customers"
-                  onPress={() => navigation.navigate('CustomerList', { areaId: item.id })}
-                  variant="outline"
-                  size="small"
-                />
-
-                <Button
-                  title="View Map"
-                  onPress={() => navigation.navigate('ServiceAreaMap', { areaId: item.id })}
-                  variant="outline"
-                  size="small"
-                />
-              </View>
-            </Card>
-          );
-        }}
+        data={serviceAreas}
+        keyExtractor={(item) => item.id}
+        renderItem={renderServiceAreaCard}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
         ListEmptyComponent={
           <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
-            <Feather name="map-pin" size={40} color={colors.textSecondary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No service areas defined yet
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + '10' }]}>
+              <Feather name="map-pin" size={32} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              No service areas yet
             </Text>
             <Text style={[styles.emptySubText, { color: colors.textSecondary }]}>
-              Add your first service area to start managing customers in that region
+              Create your first service area to start managing customers in specific regions
             </Text>
-            <Button title="Add Service Area" onPress={openAddModal} style={styles.emptyButton} />
+            <Button 
+              title="Create Service Area" 
+              onPress={openAddModal} 
+              style={styles.emptyButton}
+              icon={<Feather name="plus" size={18} color="white" />}
+            />
           </Card>
         }
       />
 
       {/* Add/Edit Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+      <Modal 
+        visible={modalVisible} 
+        transparent 
+        animationType="slide" 
+        onRequestClose={() => setModalVisible(false)}
+      >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 {editingArea ? 'Edit Service Area' : 'Add New Service Area'}
               </Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <TouchableOpacity 
+                onPress={() => setModalVisible(false)}
+                style={styles.closeButton}
+                activeOpacity={0.7}
+              >
                 <Feather name="x" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalForm}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Area Name*</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.background,
-                    color: colors.text,
-                    borderColor: colors.border,
-                  },
-                ]}
-                placeholder="e.g. North District"
-                placeholderTextColor={colors.textSecondary}
-                value={areaName}
-                onChangeText={setAreaName}
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.text }]}>ZIP Codes* (comma separated)</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.background,
-                    color: colors.text,
-                    borderColor: colors.border,
-                    textAlignVertical: 'top',
-                  },
-                ]}
-                placeholder="e.g. 508204, 508206, 500008"
-                placeholderTextColor={colors.textSecondary}
-                value={zipCodesInput}
-                onChangeText={setZipCodesInput}
-                multiline
-                numberOfLines={3}
-              />
-
-              {zipCodesInput !== '' && (
-                <Text style={[styles.helperText, { color: colors.textSecondary }]}>
-                  Detected Location:{' '}
-                  <Text style={{ fontWeight: 'bold', color: colors.text }}>
-                    {areaName}, {zipCodesInput}
-                  </Text>
+            <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>
+                  Area Name <Text style={{ color: colors.error }}>*</Text>
                 </Text>
-              )}
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.background,
+                      color: colors.text,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  placeholder="e.g. North District, Downtown Area"
+                  placeholderTextColor={colors.textSecondary}
+                  value={areaName}
+                  onChangeText={setAreaName}
+                  autoCapitalize="words"
+                />
+              </View>
 
-              <Text style={[styles.helperText, { color: colors.textSecondary }]}>
-                The app will automatically assign customers in{' '}
-                <Text style={{ fontWeight: 'bold', color: colors.text }}>
-                  {zipCodesInput || 'your selected ZIP codes'}
-                </Text>{' '}
-                to your franchise.
-              </Text>
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>
+                  ZIP Codes <Text style={{ color: colors.error }}>*</Text>
+                </Text>
+                <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
+                  Enter ZIP codes separated by commas
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    {
+                      backgroundColor: colors.background,
+                      color: colors.text,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  placeholder="e.g. 508204, 508206, 500008"
+                  placeholderTextColor={colors.textSecondary}
+                  value={zipCodesInput}
+                  onChangeText={setZipCodesInput}
+                  multiline
+                  numberOfLines={3}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              {zipCodesInput.trim() && (
+                <View style={[styles.previewCard, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.previewTitle, { color: colors.text }]}>
+                    Preview
+                  </Text>
+                  <Text style={[styles.previewText, { color: colors.textSecondary }]}>
+                    Area: <Text style={{ color: colors.text, fontWeight: '600' }}>
+                      {areaName || 'Unnamed Area'}
+                    </Text>
+                  </Text>
+                  <Text style={[styles.previewText, { color: colors.textSecondary }]}>
+                    ZIP Codes: <Text style={{ color: colors.text, fontWeight: '600' }}>
+                      {zipCodesInput.split(',').map(zip => zip.trim()).filter(zip => zip).join(', ')}
+                    </Text>
+                  </Text>
+                </View>
+              )}
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -355,14 +499,21 @@ const LocationManagement = () => {
                 style={styles.modalButton}
               />
               <Button
-                title={editingArea ? 'Update' : 'Add'}
+                title={editingArea ? 'Update Area' : 'Create Area'}
                 onPress={handleSubmit}
                 style={styles.modalButton}
+                disabled={!areaName.trim() || !zipCodesInput.trim()}
               />
             </View>
           </View>
         </View>
       </Modal>
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <Loading />
+        </View>
+      )}
     </View>
   );
 };
@@ -375,36 +526,50 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+  },
+  addButton: {
+    minWidth: 100,
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
   areaCard: {
     marginBottom: 16,
     padding: 16,
+    borderRadius: 12,
   },
   areaCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   areaInfo: {
     flex: 1,
+    marginRight: 12,
   },
   areaName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   statusText: {
     fontSize: 12,
@@ -414,43 +579,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   areaDetails: {
-    marginTop: 8,
     marginBottom: 16,
   },
   detailRow: {
     flexDirection: 'row',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 4,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
-    width: 80,
+    marginLeft: 6,
   },
   detailValue: {
     fontSize: 14,
-    flex: 1,
+    marginLeft: 20,
+    marginBottom: 4,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  footerButton: {
+    flex: 0.48,
   },
   emptyCard: {
-    padding: 24,
+    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 40,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 16,
     marginBottom: 8,
   },
   emptySubText: {
@@ -458,63 +638,97 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     paddingHorizontal: 20,
+    lineHeight: 20,
   },
   emptyButton: {
-    minWidth: 200,
+    minWidth: 180,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     padding: 20,
   },
   modalContent: {
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
+    maxHeight: '80%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
+  closeButton: {
+    padding: 4,
+  },
   modalForm: {
-    maxHeight: 300,
+    maxHeight: 400,
+  },
+  inputGroup: {
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 6,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  inputHint: {
+    fontSize: 12,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
-    minHeight: 48,
+    minHeight: 52,
   },
-  helperText: {
-    fontSize: 12,
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  previewCard: {
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 20,
+  },
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  previewText: {
+    fontSize: 13,
+    marginBottom: 4,
   },
   modalFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 12,
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
   modalButton: {
-    minWidth: 100,
-    marginLeft: 12,
+    flex: 0.48,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

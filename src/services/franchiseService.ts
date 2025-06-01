@@ -102,11 +102,11 @@ async getDashboardData(token: string, franchiseId?: string): Promise<FranchiseDa
   },
 
   async updateFranchiseLocation(id: string, locationData: any): Promise<Location> {
-    const response = await api.put(`/franchise/locations/${id}`, locationData);
+    const response = await api.put(`/franchises/${id}/locations`, locationData);
     return response.data;
   },
 
   async deleteFranchiseLocation(id: string): Promise<void> {
-    await api.delete(`/franchise/locations/${id}`);
+    await api.delete(`/franchises/locations/${id}`);
   },
 };

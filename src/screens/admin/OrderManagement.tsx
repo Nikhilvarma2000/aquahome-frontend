@@ -306,9 +306,27 @@ const OrderManagement = () => {
             )
           }
 
+          {
+            item.status !== "cancelled" && item.status !== "delivered" && (
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}
+                onPress={() => {
+                  setSelectedOrder(item);
+                  console.log("📦 Selected Order:", item);
+                  setAssignModalVisible(true);
+                }}
+              >
+                <Feather name="user-plus" size={16} color={colors.primary} />
+                <Text style={[styles.actionBtnText, { color: colors.primary }]}>Assign Franchise</Text>
+              </TouchableOpacity>
+            )
+          }
 
-          <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+
+          
+        </View>
+        <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: colors.success + '15', borderColor: colors.success,marginTop:10}]}
             onPress={() => {
               setSelectedOrder(item);
               setStatusModalVisible(true);
@@ -317,7 +335,6 @@ const OrderManagement = () => {
             <Feather name="edit-3" size={16} color={colors.success} />
             <Text style={[styles.actionBtnText, { color: colors.success }]}>Update Status</Text>
           </TouchableOpacity>
-        </View>
       </Card>
     );
   };
@@ -489,10 +506,10 @@ const OrderManagement = () => {
                   Order #{selectedOrder?.id ? String(selectedOrder.id).substring(0, 8) : 'Unknown'}
                 </Text>
                 <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
-                  Customer: {selectedOrder?.user?.name || 'Unknown'}
+                  Customer: {selectedOrder?.customer?.name || 'Unknown'}
                 </Text>
                 <Text style={[styles.orderSummaryText, { color: colors.textSecondary }]}>
-                  Type: {selectedOrder?.orderType ? selectedOrder.orderType.charAt(0).toUpperCase() + selectedOrder.orderType.slice(1) : 'N/A'}
+                  Type: {selectedOrder?.order_type || 'Unknown'}
                 </Text>
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
               </View>
