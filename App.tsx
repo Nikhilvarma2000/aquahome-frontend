@@ -44,7 +44,7 @@ function MainApp() {
 
         if (token) {
           await axios.post(
-            'http://192.168.207.125:5001/api/profile/location',
+            'http://192.168.54.125:5001/api/profile/location',
             { latitude, longitude },
             {
               headers: {

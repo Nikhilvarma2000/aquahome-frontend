@@ -27,6 +27,16 @@ export const customerService = {
     };
   },
 
+  async updateProfile(userData: Partial<User>): Promise<User> {
+    try {
+      const response = await api.put("/profile/v2", userData);
+      return response.data;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      throw error;
+    }
+  },
+
   async getUser(): Promise<User> {
     try {
       const response = await api.get("/profile");
@@ -217,7 +227,7 @@ export const customerService = {
   ): Promise<{ message: string }> {
     try {
       const response = await api.post(
-        `/customer/service-requests/${serviceRequestId}/cancel`
+        `/services/${serviceRequestId}/cancel`
       );
       return response.data;
     } catch (error) {

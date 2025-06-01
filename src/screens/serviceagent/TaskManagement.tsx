@@ -77,7 +77,7 @@ const TaskManagement = ({ navigation }: any) => {
   useFocusEffect(
     useCallback(() => {
       fetchTasks();
-    }, [])
+    }, [activeFilter])
   );
 
   const onRefresh = () => {

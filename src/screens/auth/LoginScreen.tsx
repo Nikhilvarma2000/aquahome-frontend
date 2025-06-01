@@ -31,6 +31,9 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     // Reset errors
     setErrors({ email: '', password: '' });
+
+    console.log("email",email)
+    console.log("password",password)
     
     // Validate fields
     let isValid = true;
@@ -45,6 +48,8 @@ const LoginScreen = () => {
       isValid = false;
     }
     
+    console.log("isValid",isValid)
+    
     if (!isValid) return;
     
     // Proceed with login
@@ -52,6 +57,7 @@ const LoginScreen = () => {
     
     try {
       await login({ email, password });
+      console.log("Login successful");
       // No need to navigate, the AuthContext will handle it
     } catch (error: any) {
       Alert.alert(
