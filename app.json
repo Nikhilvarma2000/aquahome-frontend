@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AquaHome",
-    "slug": "nikhilvarma",
+    "slug": "aqua",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icons/aqua_home.png",
@@ -49,9 +49,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "7788af30-c7d6-42a6-b434-ad4a664de3bf"
+        "projectId": "25454bc9-af5e-4b6d-b5f1-05e88764359f"
       }
     },
-    "owner": "nikhilvarma"
+    "owner": "cherry93479"
   }
 }
